@@ -1,5 +1,5 @@
 {
-  "name": "react-native-svg-draw",
+  "name": "@archireport/react-native-svg-draw",
   "version": "0.1.0",
   "description": "React Native drawing component based on SVG with editable annotations",
   "main": "lib/commonjs/index",

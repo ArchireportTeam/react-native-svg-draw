@@ -169,7 +169,7 @@ export default function DrawWithOptions({
           <Pressable
             style={styles.option}
             onPress={() => {
-              drawRef.current?.deletedSelectedItem();
+              drawRef.current?.deleteSelectedItem();
             }}
           >
             <ThrashSvg width={28} height={28} fill="white" />

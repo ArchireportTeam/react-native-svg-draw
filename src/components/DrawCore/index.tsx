@@ -290,7 +290,7 @@ const DrawCore = React.forwardRef<
     ref,
     () => ({
       drawingContainer: drawContainer,
-      deletedSelectedItem: () => {
+      deleteSelectedItem: () => {
         if (currentItem.value) {
           currentItem.value = null;
         }

@@ -18,7 +18,7 @@ React Native drawing component based on SVG with editable annotations
 
 ```sh
 
-npm install react-native-svg-draw react-native-reanimated react-native-gesture-handler react-native-svg react-native-view-shot react-native-linear-gradient
+npm install @archireport/react-native-svg-draw react-native-reanimated react-native-gesture-handler react-native-svg react-native-view-shot react-native-linear-gradient
 
 ```
 
@@ -26,7 +26,7 @@ npm install react-native-svg-draw react-native-reanimated react-native-gesture-h
 
 ```sh
 
-expo install react-native-svg-draw react-native-reanimated react-native-gesture-handler react-native-svg react-native-view-shot expo-linear-gradient
+expo install @archireport/react-native-svg-draw react-native-reanimated react-native-gesture-handler react-native-svg react-native-view-shot expo-linear-gradient
 
 ```
 

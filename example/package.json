@@ -10,7 +10,12 @@
   },
   "dependencies": {
     "react": "16.13.1",
-    "react-native": "0.63.4"
+    "react-native": "0.63.4",
+    "react-native-gesture-handler": "^1.10.3",
+    "react-native-linear-gradient": "^2.5.6",
+    "react-native-reanimated": "^2.2.0",
+    "react-native-svg": "mlecoq/react-native-svg#hotfix/displayMarkersOnAndroid",
+    "react-native-view-shot": "^3.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

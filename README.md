@@ -30,6 +30,19 @@ expo install @archireport/react-native-svg-draw react-native-reanimated react-na
 
 ```
 
+
+---
+**⚠️ extra steps are required**
+
+_React Native Gesture Handler_ needs extra steps to finalize its installation, please follow their [installation instructions](https://docs.swmansion.com/react-native-gesture-handler/docs/#installation).
+
+_React Native Reanimated_ needs extra steps to finalize its installation, please follow their [installation instructions](https://docs.swmansion.com/react-native-reanimated/docs/installation/).
+
+
+
+---
+
+
 ## Usage
 
 ### Bare react native app

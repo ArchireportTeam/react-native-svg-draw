@@ -9,7 +9,6 @@ import {
   StyleSheet,
   TextInput,
   View,
-  KeyboardAvoidingView,
   Keyboard,
   ImageBackground,
   Image,
@@ -124,9 +123,6 @@ function pDistance(
   var dy = y - yy;
   return Math.sqrt(dx * dx + dy * dy);
 }
-
-const AnimatedKeyboardAvoidingView =
-  Animated.createAnimatedComponent(KeyboardAvoidingView);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -1044,7 +1040,7 @@ const DrawCore = React.forwardRef<
 
   const textInputRef = useRef<TextInput>(null);
 
-  const keyboardAvoidingViewStyle = useAnimatedStyle(() => {
+  const textInputContainerStyle = useAnimatedStyle(() => {
     return {
       height: 'auto',
       backgroundColor: 'white',
@@ -1281,10 +1277,7 @@ const DrawCore = React.forwardRef<
           />
         </InputAccessoryView>
       ) : (
-        <AnimatedKeyboardAvoidingView
-          behavior="position"
-          style={keyboardAvoidingViewStyle}
-        >
+        <Animated.View style={textInputContainerStyle}>
           <TextInput
             ref={textInputRef}
             style={styles.textInput}
@@ -1293,7 +1286,7 @@ const DrawCore = React.forwardRef<
             value={textVal}
             autoCorrect={false}
           />
-        </AnimatedKeyboardAvoidingView>
+        </Animated.View>
       )}
     </View>
   );

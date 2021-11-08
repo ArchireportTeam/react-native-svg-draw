@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { StyleSheet, SafeAreaView, Dimensions } from 'react-native';
-import { DrawWithOptions } from 'react-native-svg-draw';
+import { DrawWithOptions } from '@archireport/react-native-svg-draw';
 import LinearGradient from 'react-native-linear-gradient';
 
 export default function App() {

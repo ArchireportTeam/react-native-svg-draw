@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Pressable,
   View,
@@ -6,6 +6,7 @@ import {
   ViewProps,
   ImageRequireSource,
   ImageURISource,
+  Keyboard,
 } from 'react-native';
 import DrawCore from '../DrawCore';
 import type { DrawItemType, DrawCoreProps } from '../../types';
@@ -80,6 +81,27 @@ export default function DrawWithOptions({
       takeSnapshot?.(drawRef.current.takeSnapshot());
     }
   }, [takeSnapshot]);
+
+  const [showToolbar, setShowToolbar] = useState(true);
+
+  useEffect(() => {
+    const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      setShowToolbar(true);
+    });
+
+    const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
+      // avoid events triggered by InputAccessoryView
+      if (event.endCoordinates.height > 100) {
+        setShowToolbar(false);
+      }
+    });
+
+    // cleanup function
+    return () => {
+      sudDidShow.remove();
+      sudDidHide.remove();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -164,21 +186,23 @@ export default function DrawWithOptions({
         onSelectionChange={setSelectedItem}
       />
 
-      <View style={styles.bottomToolBar}>
-        {selectedItem ? (
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              drawRef.current?.deleteSelectedItem();
-            }}
-          >
-            <ThrashSvg width={28} height={28} fill="white" />
+      {showToolbar ? (
+        <View style={styles.bottomToolBar}>
+          {selectedItem ? (
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                drawRef.current?.deleteSelectedItem();
+              }}
+            >
+              <ThrashSvg width={28} height={28} fill="white" />
+            </Pressable>
+          ) : null}
+          <Pressable style={styles.sendButton} onPress={onPressSend}>
+            <SendSvg fill="#fff" width={20} height={20} />
           </Pressable>
-        ) : null}
-        <Pressable style={styles.sendButton} onPress={onPressSend}>
-          <SendSvg fill="#fff" width={20} height={20} />
-        </Pressable>
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -63,6 +63,7 @@ const DrawPad = ({
               stroke="context-stroke"
               points="0,-2 0,2 0,0"
               strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </Marker>
 

@@ -3,8 +3,9 @@ import * as React from 'react';
 import { StyleSheet, SafeAreaView, Dimensions } from 'react-native';
 import { DrawWithOptions } from '@archireport/react-native-svg-draw';
 import LinearGradient from 'react-native-linear-gradient';
+import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
 
-export default function App() {
+export default gestureHandlerRootHOC(function App() {
   return (
     <SafeAreaView style={styles.container}>
       <DrawWithOptions
@@ -13,7 +14,7 @@ export default function App() {
       />
     </SafeAreaView>
   );
-}
+});
 
 const { height } = Dimensions.get('window');
 

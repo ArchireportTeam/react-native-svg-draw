@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "react": "17.0.2",
-    "react-native": "0.66.2",
-    "react-native-gesture-handler": "^1.10.3",
+    "react-native": "0.68.2",
+    "react-native-gesture-handler": "^2.4.2",
     "react-native-linear-gradient": "^2.5.6",
-    "react-native-reanimated": "^2.2.4",
+    "react-native-reanimated": "^2.8.0",
     "react-native-svg": "mlecoq/react-native-svg#hotfix/displayMarkersOnAndroid",
     "react-native-view-shot": "^3.1.2"
   },
@@ -21,6 +21,6 @@
     "@babel/core": "^7.16.0",
     "@babel/runtime": "^7.16.0",
     "babel-plugin-module-resolver": "^4.1.0",
-    "metro-react-native-babel-preset": "^0.66.2"
+    "metro-react-native-babel-preset": "^0.67.0"
   }
 }

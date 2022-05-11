@@ -86,7 +86,6 @@ export default function CurrentAnimatedItem({
       ry: coordinates.ry,
       stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
       opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
-      fill: 'none',
       strokeWidth:
         currentItem.value?.type === 'ellipse'
           ? currentItem.value.strokeWidth
@@ -107,12 +106,11 @@ export default function CurrentAnimatedItem({
       y2: coordinates.y2,
       stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
       opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
-      fill: 'none',
       strokeWidth:
         currentItem.value?.type === 'singleHead'
           ? currentItem.value.strokeWidth
           : 0,
-      markerEnd: 'url(#arrowhead)',
+      markerEnd: 'arrowhead',
     };
   }, [currentItem.value]);
 
@@ -129,13 +127,12 @@ export default function CurrentAnimatedItem({
       y2: coordinates.y2,
       stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
       opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
-      fill: 'none',
       strokeWidth:
         currentItem.value?.type === 'doubleHead'
           ? currentItem.value.strokeWidth
           : 0,
-      markerStart: 'url(#side)',
-      markerEnd: 'url(#side)',
+      markerStart: 'side',
+      markerEnd: 'side',
     };
   }, [currentItem.value]);
 
@@ -150,7 +147,6 @@ export default function CurrentAnimatedItem({
       width: coordinates.width,
       height: coordinates.height,
       stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      fill: 'none',
       opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
       strokeWidth:
         currentItem.value?.type === 'rectangle'
@@ -172,8 +168,8 @@ export default function CurrentAnimatedItem({
         currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
       stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
       opacity: currentItem.value?.type === 'pen' ? 1 : 0,
-      markerStart: 'url(#selection)',
-      markerEnd: 'url(#selection)',
+      markerStart: 'selection',
+      markerEnd: 'selection',
     };
   }, [currentItem.value]);
 

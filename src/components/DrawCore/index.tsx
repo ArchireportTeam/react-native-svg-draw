@@ -293,10 +293,14 @@ const DrawCore = React.forwardRef<
         onSelectionChange?.(false);
       },
       takeSnapshot: async (): Promise<string | undefined> => {
+        if (currentItem.value) {
+          updateDoneItems(currentItem.value);
+          currentItem.value = null;
+        }
         return viewShot.current?.capture?.();
       },
     }),
-    [currentItem, onSelectionChange]
+    [currentItem, onSelectionChange, updateDoneItems]
   );
 
   useEffect(() => {

@@ -1224,7 +1224,6 @@ const DrawCore = React.forwardRef<
                     options={{
                       format: 'jpg',
                       quality: 1,
-                      ...originalImageSize,
                     }}
                     style={imageSize}
                   >

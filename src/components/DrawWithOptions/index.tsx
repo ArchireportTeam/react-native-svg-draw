@@ -118,9 +118,10 @@ export default function DrawWithOptions({
             }}
           >
             <PenSvg
-              height={27}
-              width={27}
-              fill="#ffffff"
+              height={23}
+              width={22}
+              stroke="#ffffff"
+              strokeWidth="2"
               opacity={drawingMode === 'pen' ? 1 : 0.5}
             />
           </Pressable>

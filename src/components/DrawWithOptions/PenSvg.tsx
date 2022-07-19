@@ -1,25 +1,14 @@
 import * as React from 'react';
-import Svg, { Defs, Path, G, Mask, Use, SvgProps } from 'react-native-svg';
+import Svg, { Path, SvgProps } from 'react-native-svg';
 
 export default function PenSvg(props: SvgProps) {
   return (
-    <Svg viewBox="0 0 28 28" {...props}>
-      <Defs>
-        <Path
-          id="prefix__a"
-          // d="M5.833 4.667c-.644 0-1.166.522-1.166 1.166v16.334c0 .644.522 1.166 1.166 1.166h16.334c.644 0 1.166-.522 1.166-1.166V5.833c0-.644-.522-1.166-1.166-1.166H5.833zm0-2.334h16.334a3.5 3.5 0 013.5 3.5v16.334a3.5 3.5 0 01-3.5 3.5H5.833a3.5 3.5 0 01-3.5-3.5V5.833a3.5 3.5 0 013.5-3.5z"
-          d="M14 26.833C6.912 26.833 1.167 21.088 1.167 14S6.912 1.167 14 1.167 26.833 6.912 26.833 14 21.088 26.833 14 26.833zm0-2.333c5.799 0 10.5-4.701 10.5-10.5S19.799 3.5 14 3.5 3.5 8.201 3.5 14 8.201 24.5 14 24.5z"
-        />
-      </Defs>
-      <G fill="none" fillRule="evenodd">
-        <Mask id="prefix__b" fill="#fff">
-          <Use xlinkHref="#prefix__a" />
-        </Mask>
-        <Use fill="#000" fillRule="nonzero" xlinkHref="#prefix__a" />
-        <G fill="#FFF" mask="url(#prefix__b)">
-          <Path d="M0 0h28v28H0z" />
-        </G>
-      </G>
+    <Svg viewBox="0 0 22 23" {...props}>
+      <Path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M16.1298 2.09927C16.3947 1.83435 16.7092 1.62421 17.0553 1.48084C17.4015 1.33746 17.7725 1.26367 18.1471 1.26367C18.5217 1.26367 18.8927 1.33746 19.2389 1.48084C19.585 1.62421 19.8995 1.83435 20.1644 2.09927C20.4293 2.36418 20.6395 2.67869 20.7828 3.02482C20.9262 3.37094 21 3.74192 21 4.11657C21 4.49122 20.9262 4.8622 20.7828 5.20833C20.6395 5.55446 20.4293 5.86896 20.1644 6.13388L6.54759 19.7507L1 21.2637L2.51298 15.7161L16.1298 2.09927Z"
+      />
     </Svg>
   );
 }

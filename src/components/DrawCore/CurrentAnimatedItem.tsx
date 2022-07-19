@@ -216,7 +216,7 @@ export default function CurrentAnimatedItem({
         ? currentItem.value.data
         : [{ x: -10, y: -10 }]
     );
-    console.log(d);
+    // console.log(d);
     return {
       d: d,
       strokeWidth:

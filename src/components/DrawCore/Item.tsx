@@ -5,6 +5,7 @@ import type { DrawItem, Point } from '../../types';
 
 // properties of a line
 const line = (pointA: Point, pointB: Point) => {
+  'worklet';
   const lengthX = pointB.x - pointA.x;
   const lengthY = pointB.y - pointA.y;
   return {
@@ -20,18 +21,17 @@ const controlPoint = (
   next: Point,
   reverse: boolean
 ): Point => {
-  // When 'current' is the first or last point of the array, 'previous' or 'next' don't exist
-  // --> replace with 'current'
+  'worklet';
+  // When 'current' is the first or last point of the array, 'previous' or 'next' don't exist --> replace with 'current'
   const p = previous || current;
   const n = next || current;
-  // The smoothing ratio
   const smoothing = 0.2;
   // Properties of the opposed-line
   const o = line(p, n);
   // If is end-control-point, add PI to the angle to go backward
   const angle = o.angle + (reverse ? Math.PI : 0);
   const length = o.length * smoothing;
-  // The control point position is relative to the current point
+
   const x = current.x + Math.cos(angle) * length;
   const y = current.y + Math.sin(angle) * length;
 
@@ -40,33 +40,24 @@ const controlPoint = (
 
 // create the bezier curve command
 const bezierCommand = (point: Point, i: number, a: Point[]) => {
-  console.log('bezier');
-
-  const startPoint: Point = point;
-  const endPoint: Point = point;
-
-  // // start control point
-  // const startPoint: Point = controlPoint(a[i - 1], a[i - 2], point, true);
-  // // end control point
-  // const endPoint: Point = controlPoint(point, a[i - 1], a[i + 1], true);
-  console.log(
-    `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`
-  );
-  return `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+  'worklet';
+  const endPoint: Point = controlPoint(point, a[i - 1], a[i + 1], true);
+  if (i === 1) {
+    const startPoint: Point = controlPoint(a[i - 1], a[i - 2], point, true);
+    return `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+  } else {
+    return `S ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+  }
 };
 
 const pointsToPath = (points: Point[]) => {
-  console.log('pointToPath Item' + points);
+  'worklet';
   return points.length > 0
     ? points.reduce(
-        // (acc, point) => `${acc} L ${point.x},${point.y}`,
-        // `M ${points[0].x},${points[0].y}`
-
         (acc, point, i, a) =>
           i === 0
             ? `M ${point.x},${point.y}`
-            : // : `${acc} L ${point.x},${point.y}`,
-              `${acc} ${bezierCommand(point, i, a)}`,
+            : `${acc} ${bezierCommand(point, i, a)}`,
         ''
       )
     : '';

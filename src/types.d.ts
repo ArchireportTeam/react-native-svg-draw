@@ -21,7 +21,7 @@ export type DrawItem = (
   | { type: 'ellipse'; data: EllipseProps }
   | { type: 'text'; data: ForeignObjectProps; text?: string }
   | { type: 'pen'; data: Point[] }
-) & { strokeWidth: number; color: hslColor; id: number | undefined };
+) & { strokeWidth: number; color: hslColor };
 
 export type DrawItemType = DrawItem['type'];
 
@@ -29,12 +29,4 @@ export type DrawCoreProps = {
   drawingContainer: React.Ref<View>;
   deleteSelectedItem: () => void;
   takeSnapshot: () => Promise<string | undefined>;
-};
-
-export type action = (
-  | { type: 'Delete' }
-  | { type: 'Draw' }
-  | { type: 'Modify' }
-) & {
-  item: number;
 };

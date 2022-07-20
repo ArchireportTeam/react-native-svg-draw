@@ -17,7 +17,6 @@ import SquareSvg from './SquareSvg';
 import ArrowSvg from './ArrowSvg';
 import TextSvg from './TextSvg';
 import CloseSvg from './CloseSvg';
-import CancelSvg from './CancelSvg';
 import ThrashSvg from './ThrashSvg';
 import SendSvg from './SendSvg';
 
@@ -214,14 +213,6 @@ export default function DrawWithOptions({
               <ThrashSvg width={28} height={28} fill="white" />
             </Pressable>
           ) : null}
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              console.log('cancel');
-            }}
-          >
-            <CancelSvg width={27} height={27} fill="#ffffff" />
-          </Pressable>
           <Pressable style={styles.sendButton} onPress={onPressSend}>
             <SendSvg fill="#fff" width={20} height={20} />
           </Pressable>

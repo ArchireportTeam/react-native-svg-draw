@@ -176,6 +176,7 @@ const drawNewItem = (
         },
         strokeWidth: style.strokeWidth.value,
         color: style.color.value,
+        id: currentItem.value?.id || 0,
       };
       break;
     case 'rectangle':
@@ -184,6 +185,7 @@ const drawNewItem = (
         data: { x: position.x, y: position.y, width: 0, height: 0 },
         strokeWidth: style.strokeWidth.value,
         color: style.color.value,
+        id: currentItem.value?.id || 0,
       };
       break;
     case 'singleHead':
@@ -198,6 +200,7 @@ const drawNewItem = (
         },
         strokeWidth: style.strokeWidth.value,
         color: style.color.value,
+        id: currentItem.value?.id || 0,
       };
       break;
     case 'text':
@@ -212,6 +215,7 @@ const drawNewItem = (
         strokeWidth: style.strokeWidth.value,
         text: DEFAULT_TEXT,
         color: style.color.value,
+        id: currentItem.value?.id || 0,
       };
       break;
     case 'pen':
@@ -220,6 +224,7 @@ const drawNewItem = (
         data: [],
         strokeWidth: style.strokeWidth.value,
         color: style.color.value,
+        id: currentItem.value?.id || 0,
       };
       break;
   }
@@ -243,6 +248,7 @@ const onTextHeightUpdate = (
       strokeWidth: currentItem.value.strokeWidth,
       color: currentItem.value.color,
       text: currentItem.value.text,
+      id: currentItem.value?.id || 0,
     };
   }
 };
@@ -256,6 +262,8 @@ const DrawCore = React.forwardRef<
     onSelectionChange?: (selected: boolean) => void;
   }
 >(({ drawingMode, image, linearGradient, onSelectionChange }, ref) => {
+  const itemId = useSharedValue(0);
+
   const mode = useSharedValue<DrawItemType>('pen');
 
   const [drawRegion, setDrawRegion] = useState<Size | null>(null);
@@ -334,6 +342,7 @@ const DrawCore = React.forwardRef<
         strokeWidth: currentItem.value.strokeWidth,
         color: currentItem.value.color,
         text: textVal,
+        id: currentItem.value.id,
       };
     }
   }, [currentItem, textVal]);
@@ -353,6 +362,10 @@ const DrawCore = React.forwardRef<
         panPosition.value = withTiming(RIGHT_PANE_WIDTH);
 
         initialItem.value = currentItem.value;
+
+        if (currentItem.value) {
+          currentItem.value.id = 0;
+        }
 
         switch (currentItem.value?.type) {
           case 'ellipse':
@@ -591,6 +604,7 @@ const DrawCore = React.forwardRef<
         const { startX, startY, zone, newlyCreated } = ctx;
         if (zone === 'OUT' && newlyCreated === false) {
           ctx.newlyCreated = true;
+
           if (mode.value === 'text') {
             runOnJS(setTextVal)('');
           }
@@ -617,6 +631,7 @@ const DrawCore = React.forwardRef<
                   x: p.x + translationX,
                   y: p.y + translationY,
                 })),
+                id: currentItem.value.id || 0,
               };
             } else {
               currentItem.value = {
@@ -627,6 +642,7 @@ const DrawCore = React.forwardRef<
                   x: x,
                   y: y,
                 }),
+                id: currentItem.value.id || 0,
               };
             }
             break;
@@ -664,6 +680,7 @@ const DrawCore = React.forwardRef<
                       rx: rx,
                       ry: ry - translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'BOTTOM':
@@ -677,6 +694,7 @@ const DrawCore = React.forwardRef<
                       rx: rx,
                       ry: ry + translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'LEFT':
@@ -690,6 +708,7 @@ const DrawCore = React.forwardRef<
                       rx: rx - translationX,
                       ry: ry,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'RIGHT':
@@ -703,6 +722,7 @@ const DrawCore = React.forwardRef<
                       rx: rx + translationX,
                       ry: ry,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'CENTER':
@@ -716,6 +736,7 @@ const DrawCore = React.forwardRef<
                       rx: rx,
                       ry: ry,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
               }
@@ -730,6 +751,7 @@ const DrawCore = React.forwardRef<
                   rx: translationX,
                   ry: translationY,
                 },
+                id: currentItem.value.id || 0,
               };
             }
 
@@ -768,6 +790,7 @@ const DrawCore = React.forwardRef<
                       width: width - translationX,
                       height: height - translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'TOP_RIGHT':
@@ -781,6 +804,7 @@ const DrawCore = React.forwardRef<
                       width: width + translationX,
                       height: height - translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'BOTTOM_LEFT':
@@ -794,6 +818,7 @@ const DrawCore = React.forwardRef<
                       width: width - translationX,
                       height: height + translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'BOTTOM_RIGHT':
@@ -807,6 +832,7 @@ const DrawCore = React.forwardRef<
                       width: width + translationX,
                       height: height + translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'CENTER':
@@ -820,6 +846,7 @@ const DrawCore = React.forwardRef<
                       width: width,
                       height: height,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
               }
@@ -834,6 +861,7 @@ const DrawCore = React.forwardRef<
                   width: translationX,
                   height: translationY,
                 },
+                id: currentItem.value.id || 0,
               };
             }
             break;
@@ -872,6 +900,7 @@ const DrawCore = React.forwardRef<
                       x2: x2,
                       y2: y2,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'BOTTOM':
@@ -885,6 +914,7 @@ const DrawCore = React.forwardRef<
                       x2: x2 + translationX,
                       y2: y2 + translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'CENTER':
@@ -898,6 +928,7 @@ const DrawCore = React.forwardRef<
                       x2: x2 + translationX,
                       y2: y2 + translationY,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
               }
@@ -912,6 +943,7 @@ const DrawCore = React.forwardRef<
                   x2: startX + translationX,
                   y2: startY + translationY,
                 },
+                id: currentItem.value.id || 0,
               };
             }
             break;
@@ -947,6 +979,7 @@ const DrawCore = React.forwardRef<
                       width: widthText - translationX,
                       height: heightText,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'RIGHT':
@@ -961,6 +994,7 @@ const DrawCore = React.forwardRef<
                       width: widthText + translationX,
                       height: heightText,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
                 case 'CENTER':
@@ -975,6 +1009,7 @@ const DrawCore = React.forwardRef<
                       width: widthText,
                       height: heightText,
                     },
+                    id: currentItem.value.id || 0,
                   };
                   break;
               }
@@ -990,11 +1025,19 @@ const DrawCore = React.forwardRef<
                   width: currentItem.value.data.width,
                   height: currentItem.value.data.height,
                 },
+                id: currentItem.value.id || 0,
               };
             }
         }
       },
-      onEnd: (_event) => {
+      onEnd: (_event, ctx) => {
+        if (ctx.newlyCreated && currentItem.value) {
+          console.log(currentItem.value);
+          currentItem.value.id = 10;
+          itemId.value = itemId.value + 1;
+          console.log('changed :' + currentItem.value.id);
+        }
+
         panPosition.value = withTiming(0);
 
         if (currentItem.value?.type === 'text') {
@@ -1009,8 +1052,11 @@ const DrawCore = React.forwardRef<
               currentItem.value.text !== DEFAULT_TEXT
                 ? currentItem.value.text ?? ''
                 : '',
+            id: currentItem.value.id,
           };
         }
+
+        console.log('end:' + currentItem.value?.id);
       },
     },
     []
@@ -1061,9 +1107,22 @@ const DrawCore = React.forwardRef<
 
   useAnimatedReaction(
     () => {
-      return { strokeWidth: strokeWidth.value, color: color.value };
+      return {
+        strokeWidth: strokeWidth.value,
+        color: color.value,
+        id: currentItem.value?.id,
+      };
     },
-    ({ strokeWidth, color }: { strokeWidth: number; color: hslColor }) => {
+    ({
+      strokeWidth,
+      color,
+      id,
+    }: {
+      strokeWidth: number;
+      color: hslColor;
+      id: number | undefined;
+    }) => {
+      // console.log('useAnimatedReaction');
       switch (currentItem.value?.type) {
         case 'singleHead':
           currentItem.value = {
@@ -1071,6 +1130,7 @@ const DrawCore = React.forwardRef<
             data: currentItem.value.data,
             strokeWidth,
             color,
+            id,
           };
           break;
         case 'doubleHead':
@@ -1079,6 +1139,7 @@ const DrawCore = React.forwardRef<
             data: currentItem.value.data,
             strokeWidth,
             color,
+            id,
           };
           break;
         case 'ellipse':
@@ -1087,6 +1148,7 @@ const DrawCore = React.forwardRef<
             data: currentItem.value.data,
             strokeWidth,
             color,
+            id,
           };
           break;
         case 'rectangle':
@@ -1095,6 +1157,7 @@ const DrawCore = React.forwardRef<
             data: currentItem.value.data,
             strokeWidth,
             color,
+            id,
           };
           break;
 
@@ -1104,6 +1167,7 @@ const DrawCore = React.forwardRef<
             data: currentItem.value.data,
             strokeWidth,
             color,
+            id,
           };
           break;
         case 'text':
@@ -1113,6 +1177,7 @@ const DrawCore = React.forwardRef<
             strokeWidth,
             color,
             text: currentItem.value.text,
+            id,
           };
           break;
       }
@@ -1209,11 +1274,7 @@ const DrawCore = React.forwardRef<
           });
         }}
       >
-        <PanGestureHandler
-          // activeOffsetX={2}
-          // activeOffsetY={2}
-          onGestureEvent={onGestureEvent}
-        >
+        <PanGestureHandler onGestureEvent={onGestureEvent}>
           <Animated.View style={imageSize || drawRegion}>
             <View ref={drawContainer}>
               {image ? (

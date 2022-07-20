@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import DrawCore from '../DrawCore';
 import type { DrawItemType, DrawCoreProps } from '../../types';
+import PenSvg from './PenSvg';
 import DoubleHeadSvg from './DoubleHeadSvg';
 import CircleSvg from './CircleSvg';
 import SquareSvg from './SquareSvg';
@@ -110,6 +111,20 @@ export default function DrawWithOptions({
           <CloseSvg height={20} width={20} fill="#ffffff" />
         </Pressable>
         <View style={styles.drawOptions}>
+          <Pressable
+            style={styles.option}
+            onPress={() => {
+              setDrawingMode('pen');
+            }}
+          >
+            <PenSvg
+              height={23}
+              width={22}
+              stroke="#ffffff"
+              strokeWidth="2"
+              opacity={drawingMode === 'pen' ? 1 : 0.5}
+            />
+          </Pressable>
           <Pressable
             style={styles.option}
             onPress={() => {

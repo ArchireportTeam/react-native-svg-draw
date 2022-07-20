@@ -5,6 +5,7 @@ import {
   EllipseProps,
   LineProps,
   RectProps,
+  PathProps,
 } from 'react-native-svg';
 
 export type Point = { x: number; y: number };

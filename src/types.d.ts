@@ -28,5 +28,6 @@ export type DrawItemType = DrawItem['type'];
 export type DrawCoreProps = {
   drawingContainer: React.Ref<View>;
   deleteSelectedItem: () => void;
+  cancelLastAction: () => void;
   takeSnapshot: () => Promise<string | undefined>;
 };

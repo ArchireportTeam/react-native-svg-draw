@@ -594,7 +594,6 @@ const DrawCore = React.forwardRef<
           if (mode.value === 'text') {
             runOnJS(setTextVal)('');
           }
-
           drawNewItem(
             mode,
             currentItem,
@@ -1211,8 +1210,8 @@ const DrawCore = React.forwardRef<
         }}
       >
         <PanGestureHandler
-          activeOffsetX={2}
-          activeOffsetY={2}
+          // activeOffsetX={2}
+          // activeOffsetY={2}
           onGestureEvent={onGestureEvent}
         >
           <Animated.View style={imageSize || drawRegion}>

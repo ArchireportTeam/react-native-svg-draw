@@ -1,16 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { G, Line, Ellipse, Rect, Path, ForeignObject } from 'react-native-svg';
-import type { DrawItem, Point } from '../../types';
-
-const transformPointsToPath = (points: Point[]) => {
-  return points.length > 0
-    ? points.reduce(
-        (acc, point) => `${acc} L ${point.x},${point.y}`,
-        `M ${points[0].x},${points[0].y}`
-      )
-    : '';
-};
+import type { DrawItem } from '../../types';
+import { pointsToPath } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({
   textZone: {
@@ -83,7 +75,7 @@ export default function Item({
     case 'pen':
       return (
         <Path
-          d={transformPointsToPath(item.data)}
+          d={pointsToPath(item.data)}
           stroke={item.color}
           fill="none"
           strokeWidth={item.strokeWidth}

@@ -58,13 +58,10 @@ const bezierCommand = (point: Point, i: number, a: Point[]) => {
   }
 };
 
-const pointsToPath = (points: Point[]) => {
+export const pointsToPath = (points: Point[]) => {
   'worklet';
   return points.length > 0
     ? points.reduce(
-        // (acc, point) => `${acc} L ${point.x},${point.y}`,
-        // `M ${points[0].x},${points[0].y}`
-
         (acc, point, i, a) =>
           i === 0
             ? `M ${point.x},${point.y}`

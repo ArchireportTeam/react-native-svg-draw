@@ -158,9 +158,5 @@
         }
       ]
     ]
-  },
-  "dependencies": {
-    "@archireport/react-native-svg-draw": "^1.0.2",
-    "react-native-linear-gradient": "^2.6.2"
   }
 }

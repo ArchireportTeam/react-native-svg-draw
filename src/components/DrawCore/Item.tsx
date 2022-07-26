@@ -2,66 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { G, Line, Ellipse, Rect, Path, ForeignObject } from 'react-native-svg';
 import type { DrawItem, Point } from '../../types';
-
-// properties of a line
-const line = (pointA: Point, pointB: Point) => {
-  'worklet';
-  const lengthX = pointB.x - pointA.x;
-  const lengthY = pointB.y - pointA.y;
-  return {
-    length: Math.sqrt(Math.pow(lengthX, 2) + Math.pow(lengthY, 2)),
-    angle: Math.atan2(lengthY, lengthX),
-  };
-};
-
-// position of a control point
-const controlPoint = (
-  current: Point,
-  previous: Point,
-  next: Point,
-  reverse: boolean
-): Point => {
-  'worklet';
-  // When 'current' is the first or last point of the array, 'previous' or 'next' don't exist --> replace with 'current'
-  const p = previous || current;
-  const n = next || current;
-  const smoothing = 0.2;
-  // Properties of the opposed-line
-  const o = line(p, n);
-  // If is end-control-point, add PI to the angle to go backward
-  const angle = o.angle + (reverse ? Math.PI : 0);
-  const length = o.length * smoothing;
-
-  const x = current.x + Math.cos(angle) * length;
-  const y = current.y + Math.sin(angle) * length;
-
-  return { x: x, y: y };
-};
-
-// create the bezier curve command
-const bezierCommand = (point: Point, i: number, a: Point[]) => {
-  'worklet';
-  const endPoint: Point = controlPoint(point, a[i - 1], a[i + 1], true);
-  if (i === 1) {
-    const startPoint: Point = controlPoint(a[i - 1], a[i - 2], point, true);
-    return `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
-  } else {
-    return `S ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
-  }
-};
-
-const pointsToPath = (points: Point[]) => {
-  'worklet';
-  return points.length > 0
-    ? points.reduce(
-        (acc, point, i, a) =>
-          i === 0
-            ? `M ${point.x},${point.y}`
-            : `${acc} ${bezierCommand(point, i, a)}`,
-        ''
-      )
-    : '';
-};
+import { pointsToPath } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({
   textZone: {

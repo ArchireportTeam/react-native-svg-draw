@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { G, Line, Ellipse, Rect, Path, ForeignObject } from 'react-native-svg';
-import type { DrawItem, Point } from '../../types';
+import type { DrawItem } from '../../types';
 import { pointsToPath } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({

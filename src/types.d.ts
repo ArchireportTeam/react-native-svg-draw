@@ -10,7 +10,9 @@ import {
 
 export type Point = { x: number; y: number };
 
-export type hslColor = `hsl(${number}, ${number}%, ${number}%)`;
+export type hslColor = `hsl(${number}, ${number | string}%, ${
+  | number
+  | string}%)`;
 
 type Size = { width: number; height: number };
 

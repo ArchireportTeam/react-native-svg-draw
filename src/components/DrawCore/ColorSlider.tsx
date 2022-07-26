@@ -99,24 +99,24 @@ const ColorSlider = ({
         const slidePos = Math.min(sliderHeight.value, startY + translationY);
 
         if (slidePos < 0.1 * sliderHeight.value) {
-          color.value = `hsl(${0 as number}, ${100 as number}%, ${Math.min(
+          color.value = `hsl(0, 100%, ${Math.min(
             100,
             100 - (slidePos / (0.1 * sliderHeight.value)) * 50
-          )}%)` as const;
+          ).toFixed(10)}%)`;
         } else if (slidePos > 0.9 * sliderHeight.value) {
-          color.value = `hsl(${0 as number}, ${100 as number}%, ${Math.max(
+          color.value = `hsl(0, 100%, ${Math.max(
             50 -
               ((slidePos - 0.9 * sliderHeight.value) /
                 (0.1 * sliderHeight.value)) *
                 50,
             0
-          )}%)` as const;
+          ).toFixed(10)}%)`;
         } else {
           color.value = `hsl(${
             ((slidePos - sliderHeight.value * 0.1) /
               (sliderHeight.value - sliderHeight.value * 0.2)) *
             360
-          }, ${100 as number}%, ${50 as number}%)` as const;
+          }, 100%, 50%)`;
         }
       },
       onEnd: () => {},

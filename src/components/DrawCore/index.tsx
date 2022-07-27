@@ -292,15 +292,16 @@ const DrawCore = React.forwardRef<
     }, []);
 
     const updateScreenStates = useCallback((done: DrawItem[]) => {
-      const newScreenStates = screenStates;
-      newScreenStates.push(done);
-      setScreenStates(newScreenStates);
+      setScreenStates((previous) => {
+        return previous.concat([done]);
+      });
     }, []);
 
-    const deleteScreenStates = useCallback((indice: number) => {
-      const newScreenStates = screenStates;
-      newScreenStates.splice(indice, 1);
-      setScreenStates(newScreenStates);
+    const deleteScreenStates = useCallback(() => {
+      setScreenStates((previous) => {
+        previous.pop();
+        return previous;
+      });
     }, []);
 
     useImperativeHandle(
@@ -310,8 +311,10 @@ const DrawCore = React.forwardRef<
         deleteSelectedItem: () => {
           if (currentItem.value) {
             currentItem.value = null;
+            runOnJS(updateScreenStates)(doneItems);
           }
           onSelectionChange?.(false);
+          onCancelChange?.(true);
         },
         cancelLastAction: () => {
           onSelectionChange?.(false);
@@ -323,9 +326,12 @@ const DrawCore = React.forwardRef<
           if (len > 1) {
             const newDoneItems: DrawItem[] = screenStates[len - 2];
             runOnJS(setDoneItems)(newDoneItems);
-            runOnJS(deleteScreenStates)(len - 1);
+            runOnJS(deleteScreenStates)();
+            if (len === 2) {
+              console.log('len=2');
+            }
           }
-          if (screenStates.length == 1) {
+          if (screenStates.length === 1) {
             onCancelChange?.(false);
           }
         },
@@ -339,11 +345,13 @@ const DrawCore = React.forwardRef<
       }),
       [
         currentItem,
-        setScreenStates,
-        setDoneItems,
         onSelectionChange,
         onCancelChange,
+        updateScreenStates,
+        doneItems,
+        screenStates,
         updateDoneItems,
+        deleteScreenStates,
       ]
     );
 
@@ -360,7 +368,11 @@ const DrawCore = React.forwardRef<
 
     const strokeWidth = useSharedValue<number>(2);
 
+    const [strokeChange, setStrokeChange] = useState(false);
+
     const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
+
+    const [colorChange, setColorChange] = useState(false);
 
     const panPosition = useSharedValue(0);
 
@@ -382,14 +394,30 @@ const DrawCore = React.forwardRef<
       }
     }, [currentItem, textVal]);
 
+    useEffect(() => {
+      if (colorChange && currentItem.value) {
+        const newDoneItems = [...doneItems, currentItem.value];
+        runOnJS(updateScreenStates)(newDoneItems);
+      }
+      setColorChange(false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [colorChange, updateScreenStates]);
+
+    useEffect(() => {
+      if (strokeChange && currentItem.value) {
+        const newDoneItems = [...doneItems, currentItem.value];
+        runOnJS(updateScreenStates)(newDoneItems);
+      }
+      setStrokeChange(false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [strokeChange, updateScreenStates]);
+
     const onGestureEvent = useAnimatedGestureHandler<
       PanGestureHandlerGestureEvent,
       Context
     >(
       {
-        onStart: ({ x, y }, ctx) => {
-          const startX = x;
-          const startY = y;
+        onStart: ({ x: startX, y: startY }, ctx) => {
           ctx.startX = startX;
           ctx.startY = startY;
           ctx.newlyCreated = false;
@@ -632,7 +660,10 @@ const DrawCore = React.forwardRef<
               break;
           }
         },
-        onActive: ({ x, y, translationX, translationY }, ctx) => {
+        onActive: (
+          { x: currentX, y: currentY, translationX, translationY },
+          ctx
+        ) => {
           const { startX, startY, zone, newlyCreated } = ctx;
           if (zone === 'OUT' && newlyCreated === false) {
             ctx.newlyCreated = true;
@@ -670,8 +701,8 @@ const DrawCore = React.forwardRef<
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
                   data: currentItem.value.data.concat({
-                    x: x,
-                    y: y,
+                    x: currentX,
+                    y: currentY,
                   }),
                 };
               }
@@ -1121,38 +1152,44 @@ const DrawCore = React.forwardRef<
           color: color.value,
         };
       },
-      ({ strokeWidth, color }: { strokeWidth: number; color: hslColor }) => {
+      ({
+        strokeWidth: sw,
+        color: c,
+      }: {
+        strokeWidth: number;
+        color: hslColor;
+      }) => {
         switch (currentItem.value?.type) {
           case 'singleHead':
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
             };
             break;
           case 'doubleHead':
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
             };
             break;
           case 'ellipse':
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
             };
             break;
           case 'rectangle':
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
             };
             break;
 
@@ -1160,16 +1197,16 @@ const DrawCore = React.forwardRef<
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
             };
             break;
           case 'text':
             currentItem.value = {
               type: currentItem.value.type,
               data: currentItem.value.data,
-              strokeWidth,
-              color,
+              strokeWidth: sw,
+              color: c,
               text: currentItem.value.text,
             };
             break;
@@ -1314,10 +1351,19 @@ const DrawCore = React.forwardRef<
 
           <Animated.View style={[styles.rightPaneBaseStyle, rightPaneStyle]}>
             <View style={styles.strokeSliderContainer}>
-              <StrokeSlider minValue={2} maxValue={10} stroke={strokeWidth} />
+              <StrokeSlider
+                minValue={2}
+                maxValue={10}
+                stroke={strokeWidth}
+                onStrokeChange={setStrokeChange}
+              />
             </View>
             <View style={styles.colorSliderContainer}>
-              <ColorSlider color={color} linearGradient={linearGradient} />
+              <ColorSlider
+                color={color}
+                linearGradient={linearGradient}
+                onColorChange={setColorChange}
+              />
             </View>
           </Animated.View>
         </View>

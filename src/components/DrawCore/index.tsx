@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -85,10 +86,10 @@ const styles = StyleSheet.create({
   },
 });
 
-function pDistance(
+const pDistance = (
   point: { x: number; y: number },
   line: { x1: number; x2: number; y1: number; y2: number }
-) {
+) => {
   'worklet';
   const { x1, x2, y1, y2 } = line;
   const { x, y } = point;
@@ -122,7 +123,7 @@ function pDistance(
   var dx = x - xx;
   var dy = y - yy;
   return Math.sqrt(dx * dx + dy * dy);
-}
+};
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -145,13 +146,12 @@ type Context = {
     | 'BOTTOM_RIGHT'
     | 'CENTER'
     | 'OUT';
-  doneItems: DrawItem[];
 };
 
 const drawNewItem = (
   mode: Animated.SharedValue<DrawItemType>,
   currentItem: Animated.SharedValue<DrawItem | null>,
-  updateDoneItems: (item: DrawItem) => void,
+  addDoneItem: (item: DrawItem) => void,
   position: { x: number; y: number },
   style: {
     textBaseHeight: Animated.SharedValue<number | null>;
@@ -162,7 +162,7 @@ const drawNewItem = (
   'worklet';
 
   if (currentItem.value) {
-    runOnJS(updateDoneItems)(currentItem.value);
+    runOnJS(addDoneItem)(currentItem.value);
   }
 
   switch (mode.value) {
@@ -248,6 +248,71 @@ const onTextHeightUpdate = (
   }
 };
 
+type Action =
+  | { type: 'ADD DONE ITEM'; item: DrawItem }
+  | { type: 'DELETE DONE ITEM'; indice: number }
+  | {
+      type: 'ADD SCREEN STATE';
+      currentItem: DrawItem | null;
+    }
+  | {
+      type: 'CANCEL';
+      onCancelChange?: (cancel: boolean) => void;
+    };
+
+const reducerDrawStates = (
+  drawStates: { doneItems: DrawItem[]; screenStates: DrawItem[][] },
+  action: Action
+) => {
+  'worklet';
+  switch (action.type) {
+    case 'ADD DONE ITEM':
+      return {
+        ...drawStates,
+        doneItems: drawStates.doneItems.concat(action.item),
+      };
+    case 'DELETE DONE ITEM':
+      const newDoneItems = drawStates.doneItems;
+      newDoneItems.splice(action.indice, 1);
+      return {
+        ...drawStates,
+        doneItems: newDoneItems,
+      };
+    case 'ADD SCREEN STATE':
+      if (action.currentItem) {
+        return {
+          ...drawStates,
+          screenStates: drawStates.screenStates.concat([
+            [...drawStates.doneItems, action.currentItem],
+          ]),
+        };
+      } else {
+        return {
+          ...drawStates,
+          screenStates: drawStates.screenStates.concat([
+            [...drawStates.doneItems],
+          ]),
+        };
+      }
+
+    case 'CANCEL':
+      const len = drawStates.screenStates.length;
+      if (len > 1) {
+        const newScreenStates = drawStates.screenStates;
+        newScreenStates.pop();
+        if (newScreenStates.length === 1) {
+          action.onCancelChange?.(false);
+        }
+        return {
+          doneItems: drawStates.screenStates[len - 2],
+          screenStates: newScreenStates,
+        };
+      } else {
+        return drawStates;
+      }
+  }
+};
+
 const DrawCore = React.forwardRef<
   DrawCoreProps,
   {
@@ -281,28 +346,34 @@ const DrawCore = React.forwardRef<
 
     const initialItem = useSharedValue<DrawItem | null>(null);
 
-    const [doneItems, setDoneItems] = useState<DrawItem[]>([]);
-
-    const [screenStates, setScreenStates] = useState<DrawItem[][]>([[]]);
+    const [drawStates, dispatchDrawStates] = useReducer(reducerDrawStates, {
+      doneItems: [],
+      screenStates: [[]],
+    });
 
     const textBaseHeight = useSharedValue<number | null>(null);
 
-    const updateDoneItems = useCallback((done: DrawItem) => {
-      setDoneItems((previous) => previous.concat(done));
+    const addDoneItem = useCallback((item: DrawItem) => {
+      dispatchDrawStates({ type: 'ADD DONE ITEM', item: item });
     }, []);
 
-    const updateScreenStates = useCallback((done: DrawItem[]) => {
-      setScreenStates((previous) => {
-        return previous.concat([done]);
+    const deleteDoneItem = useCallback((indice: number) => {
+      dispatchDrawStates({ type: 'DELETE DONE ITEM', indice: indice });
+    }, []);
+
+    const addScreenStates = useCallback((item: DrawItem | null) => {
+      dispatchDrawStates({
+        type: 'ADD SCREEN STATE',
+        currentItem: item,
       });
     }, []);
 
-    const deleteScreenStates = useCallback(() => {
-      setScreenStates((previous) => {
-        previous.pop();
-        return previous;
+    const cancelAction = useCallback(() => {
+      dispatchDrawStates({
+        type: 'CANCEL',
+        onCancelChange: onCancelChange,
       });
-    }, []);
+    }, [onCancelChange]);
 
     useImperativeHandle(
       ref,
@@ -311,7 +382,7 @@ const DrawCore = React.forwardRef<
         deleteSelectedItem: () => {
           if (currentItem.value) {
             currentItem.value = null;
-            runOnJS(updateScreenStates)(doneItems);
+            addScreenStates(null);
           }
           onSelectionChange?.(false);
           onCancelChange?.(true);
@@ -319,25 +390,13 @@ const DrawCore = React.forwardRef<
         cancelLastAction: () => {
           onSelectionChange?.(false);
           if (currentItem.value) {
-            runOnJS(updateDoneItems)(currentItem.value);
             currentItem.value = null;
           }
-          const len = screenStates.length;
-          if (len > 1) {
-            const newDoneItems: DrawItem[] = screenStates[len - 2];
-            runOnJS(setDoneItems)(newDoneItems);
-            runOnJS(deleteScreenStates)();
-            if (len === 2) {
-              console.log('len=2');
-            }
-          }
-          if (screenStates.length === 1) {
-            onCancelChange?.(false);
-          }
+          cancelAction();
         },
         takeSnapshot: async (): Promise<string | undefined> => {
           if (currentItem.value) {
-            updateDoneItems(currentItem.value);
+            addDoneItem(currentItem.value);
             currentItem.value = null;
           }
           return viewShot.current?.capture?.();
@@ -347,32 +406,24 @@ const DrawCore = React.forwardRef<
         currentItem,
         onSelectionChange,
         onCancelChange,
-        updateScreenStates,
-        doneItems,
-        screenStates,
-        updateDoneItems,
-        deleteScreenStates,
+        addScreenStates,
+        cancelAction,
+        addDoneItem,
       ]
     );
 
     useEffect(() => {
       mode.value = drawingMode;
       if (currentItem.value) {
-        updateDoneItems(currentItem.value);
+        addDoneItem(currentItem.value);
       }
       currentItem.value = null;
       onSelectionChange?.(false);
-    }, [drawingMode, mode, currentItem, updateDoneItems, onSelectionChange]);
-
-    const addNewItem = runOnJS(updateDoneItems);
+    }, [drawingMode, mode, currentItem, onSelectionChange, addDoneItem]);
 
     const strokeWidth = useSharedValue<number>(2);
 
-    const [strokeChange, setStrokeChange] = useState(false);
-
     const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
-
-    const [colorChange, setColorChange] = useState(false);
 
     const panPosition = useSharedValue(0);
 
@@ -381,6 +432,12 @@ const DrawCore = React.forwardRef<
     const textFocus = useCallback(() => {
       textInputRef.current?.focus();
     }, []);
+
+    const onColorStrokeChange = useCallback(() => {
+      if (currentItem.value) {
+        addScreenStates(currentItem.value);
+      }
+    }, [addScreenStates, currentItem.value]);
 
     useEffect(() => {
       if (currentItem.value?.type === 'text') {
@@ -393,24 +450,6 @@ const DrawCore = React.forwardRef<
         };
       }
     }, [currentItem, textVal]);
-
-    useEffect(() => {
-      if (colorChange && currentItem.value) {
-        const newDoneItems = [...doneItems, currentItem.value];
-        runOnJS(updateScreenStates)(newDoneItems);
-      }
-      setColorChange(false);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [colorChange, updateScreenStates]);
-
-    useEffect(() => {
-      if (strokeChange && currentItem.value) {
-        const newDoneItems = [...doneItems, currentItem.value];
-        runOnJS(updateScreenStates)(newDoneItems);
-      }
-      setStrokeChange(false);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [strokeChange, updateScreenStates]);
 
     const onGestureEvent = useAnimatedGestureHandler<
       PanGestureHandlerGestureEvent,
@@ -673,7 +712,7 @@ const DrawCore = React.forwardRef<
             drawNewItem(
               mode,
               currentItem,
-              addNewItem,
+              addDoneItem,
               { x: startX, y: startY },
               { textBaseHeight, strokeWidth, color }
             );
@@ -1071,7 +1110,7 @@ const DrawCore = React.forwardRef<
               }
           }
         },
-        onEnd: (_event, ctx) => {
+        onEnd: (_event) => {
           panPosition.value = withTiming(0);
 
           if (currentItem.value?.type === 'text') {
@@ -1089,17 +1128,10 @@ const DrawCore = React.forwardRef<
             };
           }
 
-          ctx.doneItems = doneItems;
-          const doneIt = ctx.doneItems;
-          const current = currentItem.value;
-          if (current) {
-            runOnJS(updateScreenStates)([...doneIt, current]);
-          } else {
-            runOnJS(updateScreenStates)(doneIt);
-          }
+          runOnJS(addScreenStates)(currentItem.value);
         },
       },
-      [doneItems]
+      []
     );
 
     const rightPaneStyle = useAnimatedStyle(() => {
@@ -1225,14 +1257,10 @@ const DrawCore = React.forwardRef<
         color.value = item.color;
         currentItem.value = item;
 
-        setDoneItems((done) => {
-          const copy = [...done];
-          copy.splice(index, 1);
-          return copy;
-        });
+        deleteDoneItem(index);
 
         if (previousItem) {
-          updateDoneItems(previousItem);
+          addDoneItem(previousItem);
         }
 
         if (item.type === 'text') {
@@ -1241,7 +1269,14 @@ const DrawCore = React.forwardRef<
           textInputRef.current?.blur();
         }
       },
-      [color, currentItem, strokeWidth, updateDoneItems, onSelectionChange]
+      [
+        onSelectionChange,
+        currentItem,
+        strokeWidth,
+        color,
+        deleteDoneItem,
+        addDoneItem,
+      ]
     );
 
     const onTextHeightChange = useCallback(
@@ -1320,7 +1355,7 @@ const DrawCore = React.forwardRef<
                       <ImageBackground source={image} style={styles.bgImage}>
                         <DrawPad
                           currentItem={currentItem}
-                          doneItems={doneItems}
+                          doneItems={drawStates.doneItems}
                           onPressItem={onPressItem}
                           onTextHeightChange={onTextHeightChange}
                         />
@@ -1339,7 +1374,7 @@ const DrawCore = React.forwardRef<
                   >
                     <DrawPad
                       currentItem={currentItem}
-                      doneItems={doneItems}
+                      doneItems={drawStates.doneItems}
                       onPressItem={onPressItem}
                       onTextHeightChange={onTextHeightChange}
                     />
@@ -1355,14 +1390,14 @@ const DrawCore = React.forwardRef<
                 minValue={2}
                 maxValue={10}
                 stroke={strokeWidth}
-                onStrokeChange={setStrokeChange}
+                onStrokeChange={onColorStrokeChange}
               />
             </View>
             <View style={styles.colorSliderContainer}>
               <ColorSlider
                 color={color}
                 linearGradient={linearGradient}
-                onColorChange={setColorChange}
+                onColorChange={onColorStrokeChange}
               />
             </View>
           </Animated.View>

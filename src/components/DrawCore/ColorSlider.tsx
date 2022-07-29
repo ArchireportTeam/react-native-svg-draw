@@ -60,7 +60,7 @@ const ColorSlider = ({
 }: {
   color: Animated.SharedValue<hslColor>;
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
-  onColorChange: (changedColor: boolean) => void;
+  onColorChange: () => void;
 }) => {
   const sliderHeight = useSharedValue(0);
 
@@ -123,7 +123,7 @@ const ColorSlider = ({
         }
       },
       onEnd: () => {
-        runOnJS(onColorChange)?.(true);
+        runOnJS(onColorChange)();
       },
     },
     []

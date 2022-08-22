@@ -249,10 +249,10 @@ const onTextHeightUpdate = (
 };
 
 type Action =
-  | { type: 'ADD DONE ITEM'; item: DrawItem }
-  | { type: 'DELETE DONE ITEM'; indice: number }
+  | { type: 'ADD_DONE_ITEM'; item: DrawItem }
+  | { type: 'DELETE_DONE_ITEM'; indice: number }
   | {
-      type: 'ADD SCREEN STATE';
+      type: 'ADD_SCREEN_STATE';
       currentItem: DrawItem | null;
     }
   | {
@@ -266,19 +266,19 @@ const reducerDrawStates = (
 ) => {
   'worklet';
   switch (action.type) {
-    case 'ADD DONE ITEM':
+    case 'ADD_DONE_ITEM':
       return {
         ...drawStates,
         doneItems: drawStates.doneItems.concat(action.item),
       };
-    case 'DELETE DONE ITEM':
+    case 'DELETE_DONE_ITEM':
       const newDoneItems = drawStates.doneItems;
       newDoneItems.splice(action.indice, 1);
       return {
         ...drawStates,
         doneItems: newDoneItems,
       };
-    case 'ADD SCREEN STATE':
+    case 'ADD_SCREEN_STATE':
       if (action.currentItem) {
         return {
           ...drawStates,
@@ -354,16 +354,16 @@ const DrawCore = React.forwardRef<
     const textBaseHeight = useSharedValue<number | null>(null);
 
     const addDoneItem = useCallback((item: DrawItem) => {
-      dispatchDrawStates({ type: 'ADD DONE ITEM', item: item });
+      dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: item });
     }, []);
 
     const deleteDoneItem = useCallback((indice: number) => {
-      dispatchDrawStates({ type: 'DELETE DONE ITEM', indice: indice });
+      dispatchDrawStates({ type: 'DELETE_DONE_ITEM', indice: indice });
     }, []);
 
     const addScreenStates = useCallback((item: DrawItem | null) => {
       dispatchDrawStates({
-        type: 'ADD SCREEN STATE',
+        type: 'ADD_SCREEN_STATE',
         currentItem: item,
       });
     }, []);

@@ -6,6 +6,7 @@ import {
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
 import Animated, {
+  runOnJS,
   useAnimatedGestureHandler,
   useAnimatedStyle,
   useDerivedValue,
@@ -55,9 +56,11 @@ const styles = StyleSheet.create({
 const ColorSlider = ({
   color,
   linearGradient: LinearGradient,
+  onColorChange,
 }: {
   color: Animated.SharedValue<hslColor>;
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
+  onColorChange: () => void;
 }) => {
   const sliderHeight = useSharedValue(0);
 
@@ -119,7 +122,9 @@ const ColorSlider = ({
           }, 100%, 50%)`;
         }
       },
-      onEnd: () => {},
+      onEnd: () => {
+        runOnJS(onColorChange)();
+      },
     },
     []
   );

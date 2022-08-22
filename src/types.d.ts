@@ -5,7 +5,6 @@ import {
   EllipseProps,
   LineProps,
   RectProps,
-  PathProps,
 } from 'react-native-svg';
 
 export type Point = { x: number; y: number };
@@ -30,5 +29,6 @@ export type DrawItemType = DrawItem['type'];
 export type DrawCoreProps = {
   drawingContainer: React.Ref<View>;
   deleteSelectedItem: () => void;
+  cancelLastAction: () => void;
   takeSnapshot: () => Promise<string | undefined>;
 };

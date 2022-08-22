@@ -19,6 +19,7 @@ import TextSvg from './TextSvg';
 import CloseSvg from './CloseSvg';
 import ThrashSvg from './ThrashSvg';
 import SendSvg from './SendSvg';
+import CancelSvg from './CancelSvg';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
@@ -76,6 +77,8 @@ export default function DrawWithOptions({
   const [drawingMode, setDrawingMode] = useState<DrawItemType>('ellipse');
 
   const [selectedItem, setSelectedItem] = useState(false);
+
+  const [cancelEnabled, setCancelEnabled] = useState(false);
 
   const onPressSend = useCallback(() => {
     if (drawRef.current) {
@@ -199,6 +202,7 @@ export default function DrawWithOptions({
         image={image}
         linearGradient={linearGradient}
         onSelectionChange={setSelectedItem}
+        onCancelChange={setCancelEnabled}
       />
 
       {showToolbar ? (
@@ -211,6 +215,21 @@ export default function DrawWithOptions({
               }}
             >
               <ThrashSvg width={28} height={28} fill="white" />
+            </Pressable>
+          ) : null}
+          {cancelEnabled ? (
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                drawRef.current?.cancelLastAction();
+              }}
+            >
+              <CancelSvg
+                width={27}
+                height={27}
+                stroke="#ffffff"
+                strokeWidth={2}
+              />
             </Pressable>
           ) : null}
           <Pressable style={styles.sendButton} onPress={onPressSend}>

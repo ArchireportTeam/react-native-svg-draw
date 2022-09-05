@@ -66,15 +66,18 @@ export default function DrawWithOptions({
   takeSnapshot,
   linearGradient,
   image,
+  defaultDrawingMode = 'ellipse',
 }: {
   close?: () => void;
   takeSnapshot?: (snap: Promise<string | undefined>) => void;
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
+  defaultDrawingMode?: DrawItemType;
 }) {
   const drawRef = useRef<DrawCoreProps>(null);
 
-  const [drawingMode, setDrawingMode] = useState<DrawItemType>('ellipse');
+  const [drawingMode, setDrawingMode] =
+    useState<DrawItemType>(defaultDrawingMode);
 
   const [selectedItem, setSelectedItem] = useState(false);
 

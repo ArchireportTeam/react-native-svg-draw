@@ -76,7 +76,7 @@ Component with header and footer, based on DrawCore
 #### Properties
 
 | Name             | Type            | Description                                                                              |
-| ---------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| ---------------- |-----------------|------------------------------------------------------------------------------------------|
 | `close`          | function        | (optional) called when cross is pressed                                                  |
 | `takeSnapshot`   | function        | called when send button (at the bottom) is pressed                                       |
 | `linearGradient` | React Component | implementation used for linear gradient (differs between expo and bare react native app) |
@@ -89,11 +89,12 @@ Component which can be used to customize header and footer
 #### Properties
 
 | Name                | Type            | Description                                                                              |
-| ------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+|---------------------| --------------- | ---------------------------------------------------------------------------------------- |
 | `drawingMode`       | enum            | used shape for drawing                                                                   |
 | `onSelectionChange` | function        | called when a shape is selected                                                          |
 | `linearGradient`    | React Component | implementation used for linear gradient (differs between expo and bare react native app) |
 | `image`             | image           | (optional) background picture                                                            |
+| `backgroundColor`   | string          | (optional) background color of the draw zone                                             |
 
 #### Ref attributes
 

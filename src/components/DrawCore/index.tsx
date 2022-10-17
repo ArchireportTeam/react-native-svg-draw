@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
   },
   rightPaneBaseStyle: {
     position: 'absolute',
@@ -321,10 +320,18 @@ const DrawCore = React.forwardRef<
     linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
     onSelectionChange?: (selected: boolean) => void;
     onCancelChange?: (cancel: boolean) => void;
+    backgroundColor?: string;
   }
 >(
   (
-    { drawingMode, image, linearGradient, onSelectionChange, onCancelChange },
+    {
+      drawingMode,
+      image,
+      linearGradient,
+      onSelectionChange,
+      onCancelChange,
+      backgroundColor,
+    },
     ref
   ) => {
     const mode = useSharedValue<DrawItemType>('pen');
@@ -1331,7 +1338,10 @@ const DrawCore = React.forwardRef<
     return (
       <View style={styles.container}>
         <View
-          style={styles.drawZone}
+          style={[
+            styles.drawZone,
+            { backgroundColor: backgroundColor ?? '#FFF' },
+          ]}
           onLayout={(event) => {
             setDrawRegion({
               height: event.nativeEvent.layout.height,

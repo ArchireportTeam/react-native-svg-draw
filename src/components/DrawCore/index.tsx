@@ -259,10 +259,12 @@ type Action =
       onCancelChange?: (cancel: boolean) => void;
     };
 
+type DrawState = { doneItems: DrawItem[]; screenStates: DrawItem[][] };
+
 const reducerDrawStates = (
-  drawStates: { doneItems: DrawItem[]; screenStates: DrawItem[][] },
+  drawStates: DrawState,
   action: Action
-) => {
+): DrawState => {
   'worklet';
   switch (action.type) {
     case 'ADD_DONE_ITEM':
@@ -303,13 +305,18 @@ const reducerDrawStates = (
           action.onCancelChange?.(false);
         }
         return {
-          doneItems: drawStates.screenStates[len - 2],
+          doneItems: drawStates.screenStates[len - 2] ?? [],
           screenStates: newScreenStates,
         };
       } else {
         return drawStates;
       }
   }
+};
+
+const initialState: DrawState = {
+  doneItems: [],
+  screenStates: [[]],
 };
 
 const DrawCore = React.forwardRef<
@@ -353,10 +360,10 @@ const DrawCore = React.forwardRef<
 
     const initialItem = useSharedValue<DrawItem | null>(null);
 
-    const [drawStates, dispatchDrawStates] = useReducer(reducerDrawStates, {
-      doneItems: [],
-      screenStates: [[]],
-    });
+    const [drawStates, dispatchDrawStates] = useReducer(
+      reducerDrawStates,
+      initialState
+    );
 
     const textBaseHeight = useSharedValue<number | null>(null);
 

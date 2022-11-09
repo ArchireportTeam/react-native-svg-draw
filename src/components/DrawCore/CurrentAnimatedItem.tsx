@@ -1,5 +1,9 @@
-import React from 'react';
-import Animated, { useAnimatedProps } from 'react-native-reanimated';
+import React, { SVGProps } from 'react';
+import Animated, {
+  createAnimatedPropAdapter,
+  processColor,
+  useAnimatedProps,
+} from 'react-native-reanimated';
 import { Path, Ellipse, Rect, Line, G } from 'react-native-svg';
 import type { DrawItem, hslColor, Point } from '../../types';
 
@@ -49,13 +53,26 @@ const controlPoint = (
 // create the bezier curve command
 const bezierCommand = (point: Point, i: number, a: Point[]) => {
   'worklet';
-  const endPoint: Point = controlPoint(point, a[i - 1], a[i + 1], true);
-  if (i === 1) {
-    const startPoint: Point = controlPoint(a[i - 1], a[i - 2], point, true);
-    return `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
-  } else {
-    return `S ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+  const previousPoint = a[i - 1];
+  const nextPoint = a[i + 1];
+  if (previousPoint && nextPoint) {
+    const endPoint: Point = controlPoint(point, previousPoint, nextPoint, true);
+    if (i === 1) {
+      const pointBefore = a[i - 2];
+      if (pointBefore) {
+        const startPoint: Point = controlPoint(
+          previousPoint,
+          pointBefore,
+          point,
+          true
+        );
+        return `C ${startPoint.x},${startPoint.y} ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+      }
+    } else {
+      return `S ${endPoint.x},${endPoint.y} ${point.x},${point.y}`;
+    }
   }
+  return '';
 };
 
 export const pointsToPath = (points: Point[]) => {
@@ -97,9 +114,9 @@ function hslToRgb(col: hslColor) {
   const hslRegExp = new RegExp(/hsl\(([\d.]+),\s*(\d+)%,\s*([\d.]+)%\)/);
   const res = hslRegExp.exec(col);
 
-  const h = res ? parseFloat(res[1]) / 360 : 0;
-  const s = res ? parseFloat(res[2]) / 100 : 0;
-  const l = res ? parseFloat(res[3]) / 100 : 0;
+  const h = res ? parseFloat(res[1] ?? '0') / 360 : 0;
+  const s = res ? parseFloat(res[2] ?? '0') / 100 : 0;
+  const l = res ? parseFloat(res[3] ?? '0') / 100 : 0;
 
   var r, g, b;
 
@@ -118,111 +135,149 @@ function hslToRgb(col: hslColor) {
   )})`;
 }
 
+const propAdapter = createAnimatedPropAdapter(
+  (props: Record<string, unknown>) => {
+    if (
+      Object.keys(props).includes('fill') &&
+      (typeof props.fill === 'string' || typeof props.fill === 'number')
+    ) {
+      props.fill = { type: 0, payload: processColor(props.fill) };
+    }
+    if (
+      Object.keys(props).includes('stroke') &&
+      (typeof props.stroke === 'string' || typeof props.stroke === 'number')
+    ) {
+      props.stroke = { type: 0, payload: processColor(props.stroke) };
+    }
+  },
+  ['fill', 'stroke']
+);
+
 export default function CurrentAnimatedItem({
   currentItem,
 }: {
   currentItem: Animated.SharedValue<DrawItem | null>;
 }) {
-  const ellipseAnimatedProps = useAnimatedProps(() => {
-    const coordinates =
-      currentItem.value?.type === 'ellipse'
-        ? currentItem.value.data
-        : { cx: -10, cy: -10, rx: 0, ry: 0 };
-
-    return {
-      cx: coordinates.cx,
-      cy: coordinates.cy,
-      rx: coordinates.rx,
-      ry: coordinates.ry,
-      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
-      strokeWidth:
+  const ellipseAnimatedProps = useAnimatedProps(
+    () => {
+      const coordinates =
         currentItem.value?.type === 'ellipse'
-          ? currentItem.value.strokeWidth
-          : 0,
-      marker: 'url(#selection)',
-    };
-  }, [currentItem.value]);
+          ? currentItem.value.data
+          : { cx: -10, cy: -10, rx: 0, ry: 0 };
 
-  const singleHeadAnimatedProps = useAnimatedProps(() => {
-    const coordinates =
-      currentItem.value?.type === 'singleHead'
-        ? currentItem.value.data
-        : { x1: -10, y1: -10, x2: -10, y2: -10 };
-    return {
-      x1: coordinates.x1,
-      y1: coordinates.y1,
-      x2: coordinates.x2,
-      y2: coordinates.y2,
-      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
-      strokeWidth:
+      return {
+        cx: coordinates.cx,
+        cy: coordinates.cy,
+        rx: coordinates.rx,
+        ry: coordinates.ry,
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'ellipse'
+            ? currentItem.value.strokeWidth
+            : 0,
+        marker: 'url(#selection)',
+      };
+    },
+    [currentItem.value],
+    propAdapter
+  );
+
+  const singleHeadAnimatedProps = useAnimatedProps(
+    () => {
+      const coordinates =
         currentItem.value?.type === 'singleHead'
-          ? currentItem.value.strokeWidth
-          : 0,
-      markerEnd: 'arrowhead',
-    };
-  }, [currentItem.value]);
+          ? currentItem.value.data
+          : { x1: -10, y1: -10, x2: -10, y2: -10 };
+      return {
+        x1: coordinates.x1,
+        y1: coordinates.y1,
+        x2: coordinates.x2,
+        y2: coordinates.y2,
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'singleHead'
+            ? currentItem.value.strokeWidth
+            : 0,
+        markerEnd: 'arrowhead',
+      };
+    },
+    [currentItem.value],
+    propAdapter
+  );
 
-  const doubleHeadAnimatedProps = useAnimatedProps(() => {
-    const coordinates =
-      currentItem.value?.type === 'doubleHead'
-        ? currentItem.value.data
-        : { x1: -10, y1: -10, x2: -10, y2: -10 };
-
-    return {
-      x1: coordinates.x1,
-      y1: coordinates.y1,
-      x2: coordinates.x2,
-      y2: coordinates.y2,
-      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
-      strokeWidth:
+  const doubleHeadAnimatedProps = useAnimatedProps(
+    () => {
+      const coordinates =
         currentItem.value?.type === 'doubleHead'
-          ? currentItem.value.strokeWidth
-          : 0,
-      markerStart: 'side',
-      markerEnd: 'side',
-    };
-  }, [currentItem.value]);
+          ? currentItem.value.data
+          : { x1: -10, y1: -10, x2: -10, y2: -10 };
 
-  const rectangleAnimatedProps = useAnimatedProps(() => {
-    const coordinates =
-      currentItem.value?.type === 'rectangle'
-        ? currentItem.value.data
-        : { x: -10, y: -10, width: 0, height: 0 };
-    return {
-      x: coordinates.x,
-      y: coordinates.y,
-      width: coordinates.width,
-      height: coordinates.height,
-      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
-      strokeWidth:
+      return {
+        x1: coordinates.x1,
+        y1: coordinates.y1,
+        x2: coordinates.x2,
+        y2: coordinates.y2,
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'doubleHead'
+            ? currentItem.value.strokeWidth
+            : 0,
+        markerStart: 'side',
+        markerEnd: 'side',
+      };
+    },
+    [currentItem.value],
+    propAdapter
+  );
+
+  const rectangleAnimatedProps = useAnimatedProps(
+    () => {
+      const coordinates =
         currentItem.value?.type === 'rectangle'
-          ? currentItem.value.strokeWidth
-          : 0,
+          ? currentItem.value.data
+          : { x: -10, y: -10, width: 0, height: 0 };
+      return {
+        x: coordinates.x,
+        y: coordinates.y,
+        width: coordinates.width,
+        height: coordinates.height,
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'rectangle'
+            ? currentItem.value.strokeWidth
+            : 0,
 
-      marker: 'url(#selection)',
-    };
-  }, [currentItem.value]);
+        marker: 'url(#selection)',
+      };
+    },
+    [currentItem.value],
+    propAdapter
+  );
 
-  const penAnimatedProps = useAnimatedProps(() => {
-    const d = pointsToPath(
-      currentItem.value?.type === 'pen'
-        ? currentItem.value.data
-        : [{ x: -10, y: -10 }]
-    );
-    return {
-      d: d,
-      strokeWidth:
-        currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
-      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-      opacity: currentItem.value?.type === 'pen' ? 1 : 0,
-      markerStart: 'selection',
-      markerEnd: 'selection',
-    };
-  }, [currentItem.value]);
+  const penAnimatedProps = useAnimatedProps(
+    () => {
+      const d = pointsToPath(
+        currentItem.value?.type === 'pen'
+          ? currentItem.value.data
+          : [{ x: -10, y: -10 }]
+      );
+      return {
+        d: d,
+        strokeWidth:
+          currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'pen' ? 1 : 0,
+        markerStart: 'selection',
+        markerEnd: 'selection',
+      };
+    },
+    [currentItem.value],
+    propAdapter
+  );
 
   return (
     <>

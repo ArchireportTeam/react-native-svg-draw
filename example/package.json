@@ -1,26 +1,27 @@
 {
-  "name": "react-native-svg-draw-example",
-  "description": "Example app for react-native-svg-draw",
-  "version": "0.0.1",
-  "private": true,
+  "name": "example",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "start": "react-native start"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
   "dependencies": {
-    "react": "17.0.2",
-    "react-native": "0.68.2",
-    "react-native-gesture-handler": "^2.4.2",
-    "react-native-linear-gradient": "^2.5.6",
+    "expo": "~47.0.3",
+    "expo-linear-gradient": "~12.0.1",
+    "expo-status-bar": "~1.4.2",
+    "react": "18.1.0",
+    "react-native": "0.70.5",
+    "react-native-gesture-handler": "~2.8.0",
     "react-native-reanimated": "^2.8.0",
-    "react-native-svg": "mlecoq/react-native-svg#hotfix/displayMarkersOnAndroid",
-    "react-native-view-shot": "^3.1.2"
+    "react-native-svg": "13.4.0",
+    "react-native-view-shot": "3.4.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.0",
-    "@babel/runtime": "^7.16.0",
-    "babel-plugin-module-resolver": "^4.1.0",
-    "metro-react-native-babel-preset": "^0.67.0"
-  }
+    "@babel/core": "^7.12.9",
+    "babel-plugin-module-resolver": "^4.1.0"
+  },
+  "private": true
 }

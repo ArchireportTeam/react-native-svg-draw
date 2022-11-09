@@ -68,9 +68,9 @@ const ColorSlider = ({
     const hslRegExp = new RegExp(/hsl\(([\d.]+),\s*(\d+)%,\s*([\d.]+)%\)/);
     const res = hslRegExp.exec(color.value);
 
-    const lum = res ? parseFloat(res[3]) : 0;
+    const lum = res ? parseFloat(res[3] ?? '0') : 0;
 
-    const tint = res ? parseFloat(res[1]) : 0;
+    const tint = res ? parseFloat(res[1] ?? '0') : 0;
 
     if (lum > 50) {
       return ((sliderHeight.value * 0.1) / 50) * (100 - lum);

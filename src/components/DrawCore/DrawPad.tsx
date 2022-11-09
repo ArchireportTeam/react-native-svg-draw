@@ -1,17 +1,11 @@
 import React from 'react';
 import type Animated from 'react-native-reanimated';
-import Svg, {
-  Circle,
-  Defs,
-  Marker,
-  MarkerUnits,
-  Polyline,
-  Use,
-} from 'react-native-svg';
+import Svg, { Circle, Defs, Marker, Polyline, Use } from 'react-native-svg';
 import CurrentAnimatedItem from './CurrentAnimatedItem';
 import CurrentAnimatedText from './CurrentAnimatedText';
 import Item from './Item';
 import type { DrawItem } from '../../types';
+import type { MarkerUnits } from 'react-native-svg/lib/typescript/elements/Marker';
 
 const DrawPad = ({
   currentItem,
@@ -26,7 +20,7 @@ const DrawPad = ({
 }) => {
   return (
     <>
-      <Svg fillRule="evenodd">
+      <Svg>
         <Defs>
           <Circle
             id="selectionIndicator"

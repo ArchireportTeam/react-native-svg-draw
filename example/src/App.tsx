@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { StyleSheet, SafeAreaView, Dimensions } from 'react-native';
 import { DrawWithOptions } from '@archireport/react-native-svg-draw';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
 
 export default gestureHandlerRootHOC(function App() {

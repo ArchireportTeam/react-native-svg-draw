@@ -20,6 +20,7 @@ import CloseSvg from './CloseSvg';
 import ThrashSvg from './ThrashSvg';
 import SendSvg from './SendSvg';
 import CancelSvg from './CancelSvg';
+import { LinearGradientProps } from 'react-native-linear-gradient';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
@@ -66,19 +67,26 @@ export default function DrawWithOptions({
   takeSnapshot,
   linearGradient,
   image,
-  defaultDrawingMode = 'ellipse',
+  //defaultDrawingMode = 'ellipse',
 }: {
   close?: () => void;
   takeSnapshot?: (snap: Promise<string | undefined>) => void;
-  linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
+  linearGradient: React.ComponentType<
+    {colors: any[]; start?: {x: number; y: number}; end?: {x: number; y: number}} & ViewProps
+  >;
   image?: ImageRequireSource | ImageURISource;
-  defaultDrawingMode?: DrawItemType;
+  //defaultDrawingMode?: DrawItemType;
 }) {
   const drawRef = useRef<DrawCoreProps>(null);
 
+  /*
+
+
+
+
   const [drawingMode, setDrawingMode] =
     useState<DrawItemType>(defaultDrawingMode);
-
+*/
   const [selectedItem, setSelectedItem] = useState(false);
 
   const [cancelEnabled, setCancelEnabled] = useState(false);
@@ -203,7 +211,6 @@ export default function DrawWithOptions({
         ref={drawRef}
         drawingMode={drawingMode}
         image={image}
-        linearGradient={linearGradient}
         onSelectionChange={setSelectedItem}
         onCancelChange={setCancelEnabled}
       />

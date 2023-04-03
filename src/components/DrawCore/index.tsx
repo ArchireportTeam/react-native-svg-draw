@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -16,8 +15,6 @@ import {
   ImageRequireSource,
   ImageURISource,
   ViewProps,
-  Platform,
-  InputAccessoryView,
 } from 'react-native';
 import Animated, {
   runOnJS,
@@ -31,8 +28,7 @@ import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
-import ColorSlider from './ColorSlider';
-import StrokeSlider from './StrokeSlider';
+
 import type {
   DrawItem,
   DrawItemType,
@@ -42,8 +38,9 @@ import type {
 } from '../../types';
 import DrawPad from './DrawPad';
 import ViewShot from 'react-native-view-shot';
+import useDrawHook from './useDrawHook';
 
-const RIGHT_PANE_WIDTH = 60;
+const RIGHT_PANE_WIDTH = 448;
 
 const styles = StyleSheet.create({
   container: {
@@ -51,27 +48,9 @@ const styles = StyleSheet.create({
   },
   drawZone: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rightPaneBaseStyle: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#000000cc',
-    width: RIGHT_PANE_WIDTH,
-    justifyContent: 'space-evenly',
-    marginVertical: 20,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
-    paddingVertical: 30,
   },
   strokeSliderContainer: {
     flex: 1,
-    paddingBottom: 15,
-    borderBottomColor: '#000000',
-    borderBottomWidth: 2,
   },
   colorSliderContainer: { flex: 1, paddingTop: 15 },
   bgImage: { width: '100%', height: '100%' },
@@ -246,7 +225,7 @@ const onTextHeightUpdate = (
     };
   }
 };
-
+/*
 type Action =
   | { type: 'ADD_DONE_ITEM'; item: DrawItem }
   | { type: 'DELETE_DONE_ITEM'; indice: number }
@@ -259,7 +238,6 @@ type Action =
       onCancelChange?: (cancel: boolean) => void;
     };
 
-type DrawState = { doneItems: DrawItem[]; screenStates: DrawItem[][] };
 
 const reducerDrawStates = (
   drawStates: DrawState,
@@ -318,29 +296,28 @@ const initialState: DrawState = {
   doneItems: [],
   screenStates: [[]],
 };
+*/
 
 const DrawCore = React.forwardRef<
   DrawCoreProps,
   {
-    drawingMode: DrawItemType;
     image?: ImageRequireSource | ImageURISource;
-    linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
-    onSelectionChange?: (selected: boolean) => void;
     onCancelChange?: (cancel: boolean) => void;
     backgroundColor?: string;
   }
 >(
   (
     {
-      drawingMode,
       image,
-      linearGradient,
-      onSelectionChange,
       onCancelChange,
       backgroundColor,
     },
     ref
   ) => {
+    const {drawState,strokeWidth,color,addDoneItem,deleteDoneItem,addScreenState,cancelAction,currentItem,drawingMode,setSelectedItem} = useDrawHook();
+
+    console.log("setSelectedItem",setSelectedItem);
+
     const mode = useSharedValue<DrawItemType>('pen');
 
     const [drawRegion, setDrawRegion] = useState<Size | null>(null);
@@ -356,25 +333,28 @@ const DrawCore = React.forwardRef<
 
     const [textVal, setTextVal] = useState<string>('');
 
-    const currentItem = useSharedValue<DrawItem | null>(null);
+    //const currentItem = useSharedValue<DrawItem | null>(null);
 
     const initialItem = useSharedValue<DrawItem | null>(null);
 
+    /*
     const [drawStates, dispatchDrawStates] = useReducer(
       reducerDrawStates,
       initialState
     );
-
+*/
     const textBaseHeight = useSharedValue<number | null>(null);
-
+/*
     const addDoneItem = useCallback((item: DrawItem) => {
       dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: item });
     }, []);
-
+*/
+/*
     const deleteDoneItem = useCallback((indice: number) => {
       dispatchDrawStates({ type: 'DELETE_DONE_ITEM', indice: indice });
     }, []);
-
+*/
+/*
     const addScreenStates = useCallback((item: DrawItem | null) => {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',
@@ -388,7 +368,7 @@ const DrawCore = React.forwardRef<
         onCancelChange: onCancelChange,
       });
     }, [onCancelChange]);
-
+*/
     useImperativeHandle(
       ref,
       () => ({
@@ -396,13 +376,13 @@ const DrawCore = React.forwardRef<
         deleteSelectedItem: () => {
           if (currentItem.value) {
             currentItem.value = null;
-            addScreenStates(null);
+            addScreenState(null);
           }
-          onSelectionChange?.(false);
+          setSelectedItem?.(false);
           onCancelChange?.(true);
         },
         cancelLastAction: () => {
-          onSelectionChange?.(false);
+          setSelectedItem?.(false);
           if (currentItem.value) {
             currentItem.value = null;
           }
@@ -418,9 +398,9 @@ const DrawCore = React.forwardRef<
       }),
       [
         currentItem,
-        onSelectionChange,
+        setSelectedItem,
         onCancelChange,
-        addScreenStates,
+        addScreenState,
         cancelAction,
         addDoneItem,
       ]
@@ -432,12 +412,28 @@ const DrawCore = React.forwardRef<
         addDoneItem(currentItem.value);
       }
       currentItem.value = null;
-      onSelectionChange?.(false);
-    }, [drawingMode, mode, currentItem, onSelectionChange, addDoneItem]);
+      setSelectedItem?.(false);
+    }, [drawingMode, mode, currentItem, setSelectedItem, addDoneItem]);
 
+    /*
     const strokeWidth = useSharedValue<number>(2);
-
     const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
+
+    
+    const styleStrokeColor = useAnimatedStyle(() => {
+      return {
+        borderWidth: strokeWidth.value,
+        borderColor: color.value
+      };
+    }, [strokeWidth,color]);
+
+        const onColorStrokeChange = useCallback(() => {
+      if (currentItem.value) {
+        addScreenStates(currentItem.value);
+      }
+    }, [addScreenStates, currentItem.value]);
+
+*/
 
     const panPosition = useSharedValue(0);
 
@@ -447,11 +443,6 @@ const DrawCore = React.forwardRef<
       textInputRef.current?.focus();
     }, []);
 
-    const onColorStrokeChange = useCallback(() => {
-      if (currentItem.value) {
-        addScreenStates(currentItem.value);
-      }
-    }, [addScreenStates, currentItem.value]);
 
     useEffect(() => {
       if (currentItem.value?.type === 'text') {
@@ -478,7 +469,8 @@ const DrawCore = React.forwardRef<
           panPosition.value = withTiming(RIGHT_PANE_WIDTH);
 
           initialItem.value = currentItem.value;
-
+          console.log('onStart');
+          console.log('currentItem.value',currentItem.value);
           switch (currentItem.value?.type) {
             case 'ellipse':
               const cx =
@@ -706,6 +698,8 @@ const DrawCore = React.forwardRef<
                 ctx.zone = 'OUT';
                 initialItem.value = null;
               }
+              console.log('pen');
+              console.log("pen currentItem",currentItem.value);
               break;
             default:
               ctx.zone = 'OUT';
@@ -723,14 +717,17 @@ const DrawCore = React.forwardRef<
             if (mode.value === 'text') {
               runOnJS(setTextVal)('');
             }
-            drawNewItem(
-              mode,
-              currentItem,
-              addDoneItem,
-              { x: startX, y: startY },
-              { textBaseHeight, strokeWidth, color }
-            );
-            onSelectionChange && runOnJS(onSelectionChange)(true);
+            if(strokeWidth && color){
+              drawNewItem(
+                mode,
+                currentItem,
+                addDoneItem,
+                { x: startX, y: startY },
+                { textBaseHeight, strokeWidth, color }
+              );
+            }
+            
+            setSelectedItem && runOnJS(setSelectedItem)(true);
             onCancelChange && runOnJS(onCancelChange)(true);
           }
           switch (currentItem.value?.type) {
@@ -1141,8 +1138,8 @@ const DrawCore = React.forwardRef<
                   : '',
             };
           }
-
-          runOnJS(addScreenStates)(currentItem.value);
+          console.log("currentItem.value",currentItem.value);
+          runOnJS(addScreenState)(currentItem.value);
         },
       },
       []
@@ -1194,8 +1191,8 @@ const DrawCore = React.forwardRef<
     useAnimatedReaction(
       () => {
         return {
-          strokeWidth: strokeWidth.value,
-          color: color.value,
+          strokeWidth: strokeWidth?.value!,
+          color: color?.value!,
         };
       },
       ({
@@ -1258,17 +1255,17 @@ const DrawCore = React.forwardRef<
             break;
         }
       },
-      [strokeWidth.value, color.value]
+      [strokeWidth?.value, color?.value]
     );
 
     const onPressItem = useCallback(
       (item: DrawItem, index: number) => () => {
-        onSelectionChange?.(true);
+        setSelectedItem?.(true);
 
         const previousItem = currentItem.value;
 
-        strokeWidth.value = item.strokeWidth;
-        color.value = item.color;
+        strokeWidth!.value = item.strokeWidth;
+        color!.value = item.color;
         currentItem.value = item;
 
         deleteDoneItem(index);
@@ -1284,7 +1281,7 @@ const DrawCore = React.forwardRef<
         }
       },
       [
-        onSelectionChange,
+        setSelectedItem,
         currentItem,
         strokeWidth,
         color,
@@ -1353,12 +1350,13 @@ const DrawCore = React.forwardRef<
             setDrawRegion({
               height: event.nativeEvent.layout.height,
               width: event.nativeEvent.layout.width,
+              
             });
           }}
         >
           <PanGestureHandler onGestureEvent={onGestureEvent}>
-            <Animated.View style={imageSize || drawRegion}>
-              <View ref={drawContainer}>
+            <Animated.View style={imageSize || drawRegion} >
+              <View ref={drawContainer}  >
                 {image ? (
                   imageSize && originalImageSize ? (
                     <ViewShot
@@ -1372,7 +1370,7 @@ const DrawCore = React.forwardRef<
                       <ImageBackground source={image} style={styles.bgImage}>
                         <DrawPad
                           currentItem={currentItem}
-                          doneItems={drawStates.doneItems}
+                          doneItems={drawState.doneItems}
                           onPressItem={onPressItem}
                           onTextHeightChange={onTextHeightChange}
                         />
@@ -1391,7 +1389,7 @@ const DrawCore = React.forwardRef<
                   >
                     <DrawPad
                       currentItem={currentItem}
-                      doneItems={drawStates.doneItems}
+                      doneItems={drawState.doneItems}
                       onPressItem={onPressItem}
                       onTextHeightChange={onTextHeightChange}
                     />
@@ -1400,26 +1398,9 @@ const DrawCore = React.forwardRef<
               </View>
             </Animated.View>
           </PanGestureHandler>
-
-          <Animated.View style={[styles.rightPaneBaseStyle, rightPaneStyle]}>
-            <View style={styles.strokeSliderContainer}>
-              <StrokeSlider
-                minValue={2}
-                maxValue={10}
-                stroke={strokeWidth}
-                onStrokeChange={onColorStrokeChange}
-              />
-            </View>
-            <View style={styles.colorSliderContainer}>
-              <ColorSlider
-                color={color}
-                linearGradient={linearGradient}
-                onColorChange={onColorStrokeChange}
-              />
-            </View>
-          </Animated.View>
         </View>
-        {Platform.OS === 'ios' ? (
+
+        {/*Platform.OS === 'ios' ? (
           <InputAccessoryView>
             <AnimatedTextInput
               ref={textInputRef}
@@ -1441,7 +1422,7 @@ const DrawCore = React.forwardRef<
               autoCorrect={false}
             />
           </Animated.View>
-        )}
+        )*/}
       </View>
     );
   }

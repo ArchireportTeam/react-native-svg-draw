@@ -10,37 +10,9 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { View, StyleSheet, Text } from 'react-native';
-
-const TRACK_R = 10;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    width: '100%',
-  },
-  thumb: {
-    position: 'absolute',
-    width: TRACK_R * 2,
-    height: TRACK_R * 2,
-    borderRadius: TRACK_R,
-    top: 0,
-    backgroundColor: 'white',
-  },
-  track: {
-    width: 10,
-    flex: 1,
-    borderRadius: 5,
-    backgroundColor: 'black',
-  },
-  textIndicator: {
-    color: 'white',
-    fontSize: 14,
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-});
+import { View, StyleSheet, Text, ImageBackground } from 'react-native';
+import { sliderStyle, TRACK_R} from './sliderStyle';
+//import Rectangle from '../DrawWithOptions/rectangle.svg';
 
 const StrokeSlider = ({
   minValue,
@@ -53,31 +25,31 @@ const StrokeSlider = ({
   stroke: Animated.SharedValue<number>;
   onStrokeChange: () => void;
 }) => {
-  const sliderHeight = useSharedValue(0);
+  const sliderWidth = useSharedValue(0);
 
   const [text, setText] = useState(stroke.value);
 
   const position = useDerivedValue(() => {
     runOnJS(setText)(Math.round(stroke.value));
     return (
-      (sliderHeight.value / (maxValue - minValue)) * (stroke.value - minValue)
+      (sliderWidth.value / (maxValue - minValue)) * (stroke.value - minValue)
     );
   });
 
   const onGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
-    { startY: number }
+    { startX: number }
   >(
     {
-      onStart: ({ y }, ctx) => {
-        ctx.startY = y;
+      onStart: ({ x }, ctx) => {
+        ctx.startX = x;
       },
-      onActive: ({ translationY }, { startY }) => {
+      onActive: ({ translationX }, { startX }) => {
         stroke.value = Math.min(
           maxValue,
           Math.max(
             minValue,
-            ((startY + translationY) / sliderHeight.value) *
+            ((startX + translationX) / sliderWidth.value) *
               (maxValue - minValue) +
               minValue
           )
@@ -92,26 +64,29 @@ const StrokeSlider = ({
 
   const style = useAnimatedStyle(() => {
     return {
-      transform: [{ translateY: position.value - TRACK_R }],
+      transform: [{ translateX: position.value - TRACK_R }],
     };
   }, [position.value]);
 
   return (
-    <View style={styles.container}>
+    <View style={sliderStyle.container} >
       <PanGestureHandler onGestureEvent={onGestureEvent}>
-        <Animated.View style={styles.container}>
+        <Animated.View style={sliderStyle.container}>
+          {/*
+                  <Rectangle width={"100%"} height={"100%"} color={"#E5E5E5"} />
+          */}
           <View
             onLayout={(event) => {
-              sliderHeight.value = event.nativeEvent.layout.height;
+              sliderWidth.value = event.nativeEvent.layout.width;
             }}
-            style={styles.track}
+            style={{
+              width: "100%",
+            }}
           />
-          <Animated.View style={[styles.thumb, style]} />
+          <Animated.View style={[sliderStyle.thumb, style]} />
         </Animated.View>
       </PanGestureHandler>
-      <Text style={styles.textIndicator}>{text}</Text>
     </View>
   );
 };
-
 export default StrokeSlider;

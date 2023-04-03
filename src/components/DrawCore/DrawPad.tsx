@@ -78,7 +78,6 @@ const DrawPad = ({
 
         <CurrentAnimatedItem currentItem={currentItem} />
       </Svg>
-
       <CurrentAnimatedText
         currentItem={currentItem}
         onHeightChange={onTextHeightChange}

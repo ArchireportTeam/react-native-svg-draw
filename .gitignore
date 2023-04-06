@@ -42,6 +42,7 @@ android.iml
 #
 example/ios/Pods
 example/vendor/bundle/
+example/android/
 
 # node.js
 #

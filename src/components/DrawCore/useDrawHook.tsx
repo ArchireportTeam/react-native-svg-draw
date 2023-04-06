@@ -1,65 +1,97 @@
-import { DrawContext } from "./DrawContext";
-import { useContext, useState } from "react";
-import { DrawItem } from "@archireport/react-native-svg-draw/src/types";
+import { DrawContext } from './DrawContext';
+import { useCallback, useContext } from 'react';
+import type { DrawItem } from 'src/types';
 
+const useDrawHook = () => {
+  const {
+    drawState,
+    setDrawState,
+    strokeWidth,
+    color,
+    currentItem,
+    drawingMode,
+    setDrawingMode,
+    itemIsSelected,
+    cancelEnabled,
+    setCancelEnabled,
+  } = useContext(DrawContext);
 
-const useDrawHook = ()=>{
+  const addDoneItem = useCallback(
+    (item: DrawItem) => {
+      'worklet';
+      setDrawState((previousDrawState) => ({
+        ...previousDrawState,
+        doneItems: drawState.doneItems.concat(item),
+      }));
+    },
+    [drawState, setDrawState]
+  );
 
-  const {drawState,setDrawState,strokeWidth,color,currentItem,drawingMode, setDrawingMode,selectedItem, setSelectedItem} = useContext(DrawContext);
+  const deleteDoneItem = useCallback(
+    (indice: number) => {
+      'worklet';
+      setDrawState((previousDrawState) => ({
+        ...previousDrawState,
+        doneItems: previousDrawState.doneItems.splice(indice, 1),
+      }));
+    },
+    [setDrawState]
+  );
 
-  const addDoneItem = (item:DrawItem)=>{
+  const addScreenState = useCallback(
+    (item: DrawItem | null) => {
+      'worklet';
+      setDrawState((previousDrawState) => ({
+        ...previousDrawState,
+        screenStates: previousDrawState.screenStates.concat([
+          item !== null
+            ? [...previousDrawState.doneItems, item]
+            : [...previousDrawState.doneItems],
+        ]),
+      }));
+    },
+    [setDrawState]
+  );
+
+  const onColorStrokeChange = useCallback(() => {
     'worklet';
-    setDrawState({
-      ...drawState,
-      doneItems: drawState.doneItems.concat(item),
-    });
-  }
-
-  const deleteDoneItem = (indice:number)=>{
-    'worklet';
-    const newDoneItems = drawState.doneItems;
-    newDoneItems.splice(indice, 1);
-
-    setDrawState({
-      ...drawState,
-      doneItems: newDoneItems,
-    });
-  }
-
-  const addScreenState = (currentItem:DrawItem|null)=>{
-    'worklet';
-    setDrawState({
-      ...drawState,
-      screenStates: drawState.screenStates.concat([
-        currentItem!==null ? [...drawState.doneItems, currentItem]:[...drawState.doneItems],
-      ]),
-    });
-  }
-
-  const onColorStrokeChange =()=> {
-    'worklet';
+    //console.log('onColorStrokeChange');
     if (currentItem?.value) {
       addScreenState(currentItem.value);
     }
-  }
+  }, [addScreenState, currentItem?.value]);
 
-
-  const cancelAction = ()=>{
+  const cancelAction = useCallback(() => {
     'worklet';
     const len = drawState.screenStates.length;
-      if (len > 1) {
-        const newScreenStates = drawState.screenStates;
-        newScreenStates.pop();
-        setDrawState({
-          doneItems: drawState.screenStates[len - 2] ?? [],
-          screenStates: newScreenStates,
-        });
-      } else {
-        return drawState;
-      }
-  }
+    if (len > 1) {
+      const newScreenStates = drawState.screenStates;
+      newScreenStates.pop();
+      setDrawState({
+        doneItems: drawState.screenStates[len - 2] ?? [],
+        screenStates: newScreenStates,
+      });
+    } else {
+      return drawState;
+    }
+  }, [drawState, setDrawState]);
 
-  return {drawState:drawState!,currentItem:currentItem!,strokeWidth,color,addDoneItem,deleteDoneItem,addScreenState,cancelAction,onColorStrokeChange,drawingMode, setDrawingMode,setSelectedItem,selectedItem}
-}
+  return {
+    drawState: drawState!,
+    currentItem: currentItem!,
+    strokeWidth: strokeWidth!,
+    color: color!,
+    addDoneItem,
+    deleteDoneItem,
+    addScreenState,
+    cancelAction,
+    onColorStrokeChange,
+    drawingMode,
+    setDrawingMode,
+    itemIsSelected: itemIsSelected!,
+    cancelEnabled,
+    setCancelEnabled,
+  };
+};
 
 export default useDrawHook;

@@ -1,4 +1,4 @@
-import { sliderStyle,TRACK_R } from './sliderStyle';
+import { sliderStyle, TRACK_R } from './sliderStyle';
 import React, { useCallback } from 'react';
 import { LayoutChangeEvent, View, ViewProps } from 'react-native';
 
@@ -14,6 +14,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import type { hslColor, LinearGradientType } from '../../types';
+import useDrawHook from '../DrawCore/useDrawHook';
 
 const gradientColors = [
   'hsl(0, 100%, 100%) 00%',
@@ -30,19 +31,16 @@ const gradientColors = [
 ];
 
 const ColorSlider = ({
-  color,
   linearGradient: LinearGradient,
-  onColorChange,
 }: {
-  color: Animated.SharedValue<hslColor>;
   linearGradient: React.ComponentType<LinearGradientType & ViewProps>;
-  onColorChange: () => void;
 }) => {
+  const { onColorStrokeChange, color } = useDrawHook();
   const sliderWidth = useSharedValue(0);
 
   const position = useDerivedValue(() => {
     const hslRegExp = new RegExp(/hsl\(([\d.]+),\s*(\d+)%,\s*([\d.]+)%\)/);
-    const res = hslRegExp.exec(color.value);
+    const res = hslRegExp.exec(color!.value);
 
     const lum = res ? parseFloat(res[3] ?? '0') : 0;
 
@@ -66,6 +64,10 @@ const ColorSlider = ({
     );
   }, [sliderWidth.value]);
 
+  const wrapperOnColorChange = () => {
+    onColorStrokeChange();
+  };
+
   const onGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
     { startX: number }
@@ -78,12 +80,12 @@ const ColorSlider = ({
         const slidePos = Math.min(sliderWidth.value, startX + translationX);
 
         if (slidePos < 0.1 * sliderWidth.value) {
-          color.value = `hsl(0, 100%, ${Math.min(
+          color!.value = `hsl(0, 100%, ${Math.min(
             100,
             100 - (slidePos / (0.1 * sliderWidth.value)) * 50
           ).toFixed(10)}%)`;
         } else if (slidePos > 0.9 * sliderWidth.value) {
-          color.value = `hsl(0, 100%, ${Math.max(
+          color!.value = `hsl(0, 100%, ${Math.max(
             50 -
               ((slidePos - 0.9 * sliderWidth.value) /
                 (0.1 * sliderWidth.value)) *
@@ -91,7 +93,7 @@ const ColorSlider = ({
             0
           ).toFixed(10)}%)`;
         } else {
-          color.value = `hsl(${
+          color!.value = `hsl(${
             ((slidePos - sliderWidth.value * 0.1) /
               (sliderWidth.value - sliderWidth.value * 0.2)) *
             360
@@ -99,7 +101,7 @@ const ColorSlider = ({
         }
       },
       onEnd: () => {
-        runOnJS(onColorChange)();
+        runOnJS(wrapperOnColorChange)();
       },
     },
     []
@@ -111,12 +113,13 @@ const ColorSlider = ({
     };
   }, [position.value]);
 
+  /*
   const selectedColorStyle = useAnimatedStyle(() => {
     return {
       backgroundColor: color.value,
     };
   }, [color.value]);
-
+*/
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {
       sliderWidth.value = event.nativeEvent.layout.width;
@@ -129,7 +132,8 @@ const ColorSlider = ({
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View style={sliderStyle.container}>
           <LinearGradient
-            start={{x: 0.0, y: 0}} end={{x: 1, y: 0}}
+            start={{ x: 0.0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             colors={gradientColors}
             onLayout={onLayout}
             style={sliderStyle.track}

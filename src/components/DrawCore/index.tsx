@@ -4,6 +4,7 @@ import React, {
   useImperativeHandle,
   useRef,
   useState,
+  useMemo,
 } from 'react';
 import {
   StyleSheet,
@@ -14,11 +15,11 @@ import {
   Image,
   ImageRequireSource,
   ImageURISource,
-  ViewProps,
 } from 'react-native';
 import Animated, {
   runOnJS,
   useAnimatedGestureHandler,
+  useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -138,7 +139,8 @@ const drawNewItem = (
   }
 ) => {
   'worklet';
-
+  console.log('********************* drawNewItem *********************');
+  console.log('currentItem.value', currentItem.value);
   if (currentItem.value) {
     runOnJS(addDoneItem)(currentItem.value);
   }
@@ -302,59 +304,64 @@ const DrawCore = React.forwardRef<
   DrawCoreProps,
   {
     image?: ImageRequireSource | ImageURISource;
-    onCancelChange?: (cancel: boolean) => void;
     backgroundColor?: string;
   }
->(
-  (
-    {
-      image,
-      onCancelChange,
-      backgroundColor,
-    },
-    ref
-  ) => {
-    const {drawState,strokeWidth,color,addDoneItem,deleteDoneItem,addScreenState,cancelAction,currentItem,drawingMode,setSelectedItem} = useDrawHook();
+>(({ image, backgroundColor }, ref) => {
+  const {
+    drawState,
+    strokeWidth,
+    color,
+    addDoneItem,
+    deleteDoneItem,
+    addScreenState,
+    cancelAction,
+    currentItem,
+    drawingMode,
+    itemIsSelected,
+    setCancelEnabled,
+    cancelEnabled,
+  } = useDrawHook();
+  console.log('drawState.doneItems.length', drawState.doneItems.length);
+  const onCancelChangeWrapper = (arg: boolean) => {
+    setCancelEnabled(arg);
+  };
 
-    console.log("setSelectedItem",setSelectedItem);
+  const mode = useSharedValue<DrawItemType>('pen');
 
-    const mode = useSharedValue<DrawItemType>('pen');
+  const [drawRegion, setDrawRegion] = useState<Size | null>(null);
 
-    const [drawRegion, setDrawRegion] = useState<Size | null>(null);
+  const [originalImageSize, setOriginalImageSize] = useState<Size | null>(null);
 
-    const [originalImageSize, setOriginalImageSize] =
-      useState<Size | null>(null);
+  const [imageSize, setImageSize] = useState<Size | null>(null);
 
-    const [imageSize, setImageSize] = useState<Size | null>(null);
+  const drawContainer = useRef<View>(null);
 
-    const drawContainer = useRef<View>(null);
+  const viewShot = useRef<ViewShot>(null);
 
-    const viewShot = useRef<ViewShot>(null);
+  const [textVal, setTextVal] = useState<string>('');
 
-    const [textVal, setTextVal] = useState<string>('');
+  //const currentItem = useSharedValue<DrawItem | null>(null);
 
-    //const currentItem = useSharedValue<DrawItem | null>(null);
+  const initialItem = useSharedValue<DrawItem | null>(null);
 
-    const initialItem = useSharedValue<DrawItem | null>(null);
-
-    /*
+  /*
     const [drawStates, dispatchDrawStates] = useReducer(
       reducerDrawStates,
       initialState
     );
 */
-    const textBaseHeight = useSharedValue<number | null>(null);
-/*
+  const textBaseHeight = useSharedValue<number | null>(null);
+  /*
     const addDoneItem = useCallback((item: DrawItem) => {
       dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: item });
     }, []);
 */
-/*
+  /*
     const deleteDoneItem = useCallback((indice: number) => {
       dispatchDrawStates({ type: 'DELETE_DONE_ITEM', indice: indice });
     }, []);
 */
-/*
+  /*
     const addScreenStates = useCallback((item: DrawItem | null) => {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',
@@ -369,53 +376,58 @@ const DrawCore = React.forwardRef<
       });
     }, [onCancelChange]);
 */
-    useImperativeHandle(
-      ref,
-      () => ({
-        drawingContainer: drawContainer,
-        deleteSelectedItem: () => {
-          if (currentItem.value) {
-            currentItem.value = null;
-            addScreenState(null);
-          }
-          setSelectedItem?.(false);
-          onCancelChange?.(true);
-        },
-        cancelLastAction: () => {
-          setSelectedItem?.(false);
-          if (currentItem.value) {
-            currentItem.value = null;
-          }
-          cancelAction();
-        },
-        takeSnapshot: async (): Promise<string | undefined> => {
-          if (currentItem.value) {
-            addDoneItem(currentItem.value);
-            currentItem.value = null;
-          }
-          return viewShot.current?.capture?.();
-        },
-      }),
-      [
-        currentItem,
-        setSelectedItem,
-        onCancelChange,
-        addScreenState,
-        cancelAction,
-        addDoneItem,
-      ]
-    );
+  useImperativeHandle(
+    ref,
+    () => ({
+      drawingContainer: drawContainer,
+      deleteSelectedItem: () => {
+        if (currentItem.value) {
+          currentItem.value = null;
+          addScreenState(null);
+        }
+        itemIsSelected!.value = false;
+        setCancelEnabled?.(true);
+      },
+      cancelLastAction: () => {
+        itemIsSelected!.value = false;
+        if (currentItem.value) {
+          currentItem.value = null;
+        }
+        cancelAction();
+      },
+      takeSnapshot: async (): Promise<string | undefined> => {
+        if (currentItem.value) {
+          addDoneItem(currentItem.value);
+          currentItem.value = null;
+        }
+        return viewShot.current?.capture?.();
+      },
+    }),
+    [
+      currentItem,
+      itemIsSelected,
+      setCancelEnabled,
+      addScreenState,
+      cancelAction,
+      addDoneItem,
+    ]
+  );
+  console.log(
+    '*****************************************************************************************'
+  );
+  console.log(drawingMode, mode.value, currentItem.value, itemIsSelected.value);
 
-    useEffect(() => {
-      mode.value = drawingMode;
-      if (currentItem.value) {
-        addDoneItem(currentItem.value);
-      }
-      currentItem.value = null;
-      setSelectedItem?.(false);
-    }, [drawingMode, mode, currentItem, setSelectedItem, addDoneItem]);
+  useEffect(() => {
+    console.log('********* useEffect *********');
+    mode.value = drawingMode;
+    if (currentItem.value) {
+      addDoneItem(currentItem.value);
+    }
+    currentItem.value = null;
+    itemIsSelected.value = false;
+  }, [drawingMode, mode, currentItem, addDoneItem, itemIsSelected]);
 
-    /*
+  /*
     const strokeWidth = useSharedValue<number>(2);
     const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
 
@@ -434,973 +446,978 @@ const DrawCore = React.forwardRef<
     }, [addScreenStates, currentItem.value]);
 
 */
+  const addScreenStateWrapper = (item: DrawItem | null) => {
+    console.log('addScreenStateWrapper item:', item);
+    addScreenState(item);
+  };
 
-    const panPosition = useSharedValue(0);
+  const panPosition = useSharedValue(0);
 
-    const showTextInput = useSharedValue(false);
+  const showTextInput = useSharedValue(false);
 
-    const textFocus = useCallback(() => {
-      textInputRef.current?.focus();
-    }, []);
+  const textFocus = useCallback(() => {
+    textInputRef.current?.focus();
+  }, []);
 
+  useEffect(() => {
+    if (currentItem.value?.type === 'text') {
+      currentItem.value = {
+        data: currentItem.value.data,
+        type: currentItem.value.type,
+        strokeWidth: currentItem.value.strokeWidth,
+        color: currentItem.value.color,
+        text: textVal,
+      };
+    }
+  }, [currentItem, textVal]);
 
-    useEffect(() => {
-      if (currentItem.value?.type === 'text') {
-        currentItem.value = {
-          data: currentItem.value.data,
-          type: currentItem.value.type,
-          strokeWidth: currentItem.value.strokeWidth,
-          color: currentItem.value.color,
-          text: textVal,
-        };
-      }
-    }, [currentItem, textVal]);
+  const onGestureEvent = useAnimatedGestureHandler<
+    PanGestureHandlerGestureEvent,
+    Context
+  >(
+    {
+      onStart: ({ x: startX, y: startY }, ctx) => {
+        console.log('*********************** onStart ***********************');
+        ctx.startX = startX;
+        ctx.startY = startY;
+        ctx.newlyCreated = false;
 
-    const onGestureEvent = useAnimatedGestureHandler<
-      PanGestureHandlerGestureEvent,
-      Context
-    >(
-      {
-        onStart: ({ x: startX, y: startY }, ctx) => {
-          ctx.startX = startX;
-          ctx.startY = startY;
-          ctx.newlyCreated = false;
+        panPosition.value = withTiming(RIGHT_PANE_WIDTH);
 
-          panPosition.value = withTiming(RIGHT_PANE_WIDTH);
+        initialItem.value = currentItem.value;
+        console.log('currentItem.value', currentItem.value);
+        switch (currentItem.value?.type) {
+          case 'ellipse':
+            const cx =
+              typeof currentItem.value.data.cx === 'string'
+                ? parseFloat(currentItem.value.data.cx)
+                : currentItem.value.data.cx || 0;
+            const cy =
+              typeof currentItem.value.data.cy === 'string'
+                ? parseFloat(currentItem.value.data.cy)
+                : currentItem.value.data.cy || 0;
+            const rx =
+              typeof currentItem.value.data.rx === 'string'
+                ? parseFloat(currentItem.value.data.rx)
+                : currentItem.value.data.rx || 0;
+            const ry =
+              typeof currentItem.value.data.ry === 'string'
+                ? parseFloat(currentItem.value.data.ry)
+                : currentItem.value.data.ry || 0;
 
-          initialItem.value = currentItem.value;
-          console.log('onStart');
-          console.log('currentItem.value',currentItem.value);
-          switch (currentItem.value?.type) {
-            case 'ellipse':
-              const cx =
-                typeof currentItem.value.data.cx === 'string'
-                  ? parseFloat(currentItem.value.data.cx)
-                  : currentItem.value.data.cx || 0;
-              const cy =
-                typeof currentItem.value.data.cy === 'string'
-                  ? parseFloat(currentItem.value.data.cy)
-                  : currentItem.value.data.cy || 0;
-              const rx =
-                typeof currentItem.value.data.rx === 'string'
-                  ? parseFloat(currentItem.value.data.rx)
-                  : currentItem.value.data.rx || 0;
-              const ry =
-                typeof currentItem.value.data.ry === 'string'
-                  ? parseFloat(currentItem.value.data.ry)
-                  : currentItem.value.data.ry || 0;
-
-              if (
-                startX <= cx + THRESHOLD &&
-                startX >= cx - THRESHOLD &&
-                startY <= cy - ry + THRESHOLD &&
-                startY >= cy - ry - THRESHOLD
-              ) {
-                ctx.zone = 'TOP';
-              } else if (
-                startX <= cx + THRESHOLD &&
-                startX >= cx - THRESHOLD &&
-                startY <= cy + ry + THRESHOLD &&
-                startY >= cy + ry - THRESHOLD
-              ) {
-                ctx.zone = 'BOTTOM';
-              } else if (
-                startY <= cy + THRESHOLD &&
-                startY >= cy - THRESHOLD &&
-                startX <= cx - rx + THRESHOLD &&
-                startX >= cx - rx - THRESHOLD
-              ) {
-                ctx.zone = 'LEFT';
-              } else if (
-                startY <= cy + THRESHOLD &&
-                startY >= cy - THRESHOLD &&
-                startX <= cx + rx + THRESHOLD &&
-                startX >= cx + rx - THRESHOLD
-              ) {
-                ctx.zone = 'RIGHT';
-              } else if (
-                ((rx > 0 && startX > cx - rx && startX < cx + rx) ||
-                  (rx < 0 && startX < cx - rx && startX > cx + rx)) &&
-                ((ry > 0 && startY > cy - ry && startY < cy + ry) ||
-                  (ry < 0 && startY < cy - ry && startY > cy + ry))
-              ) {
-                ctx.zone = 'CENTER';
-              } else {
-                ctx.zone = 'OUT';
-                initialItem.value = null;
-              }
-
-              break;
-            case 'rectangle':
-              const x =
-                typeof currentItem.value.data.x === 'string'
-                  ? parseFloat(currentItem.value.data.x)
-                  : currentItem.value.data.x || 0;
-              const y =
-                typeof currentItem.value.data.y === 'string'
-                  ? parseFloat(currentItem.value.data.y)
-                  : currentItem.value.data.y || 0;
-              const height =
-                typeof currentItem.value.data.height === 'string'
-                  ? parseFloat(currentItem.value.data.height)
-                  : currentItem.value.data.height || 0;
-              const width =
-                typeof currentItem.value.data.width === 'string'
-                  ? parseFloat(currentItem.value.data.width)
-                  : currentItem.value.data.width || 0;
-
-              if (startX <= x + THRESHOLD && startX >= x - THRESHOLD) {
-                if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-                  ctx.zone = 'TOP_LEFT';
-                } else if (
-                  startY <= y + height + THRESHOLD &&
-                  startY >= y + height - THRESHOLD
-                ) {
-                  ctx.zone = 'BOTTOM_LEFT';
-                }
-              } else if (
-                startX <= x + width + THRESHOLD &&
-                startX >= x + width - THRESHOLD
-              ) {
-                if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-                  ctx.zone = 'TOP_RIGHT';
-                } else if (
-                  startY <= y + height + THRESHOLD &&
-                  startY >= y + height - THRESHOLD
-                ) {
-                  ctx.zone = 'BOTTOM_RIGHT';
-                }
-              } else if (
-                ((width > 0 && startX > x && startX < x + width) ||
-                  (width < 0 && startX < x && startX > x + width)) &&
-                ((height > 0 && startY > y && startY < y + height) ||
-                  (height < 0 && startY < y && startY > y + height))
-              ) {
-                ctx.zone = 'CENTER';
-              } else {
-                ctx.zone = 'OUT';
-                initialItem.value = null;
-              }
-
-              break;
-            case 'doubleHead':
-            case 'singleHead':
-              const x1 =
-                typeof currentItem.value.data.x1 === 'string'
-                  ? parseFloat(currentItem.value.data.x1)
-                  : currentItem.value.data.x1 || 0;
-              const y1 =
-                typeof currentItem.value.data.y1 === 'string'
-                  ? parseFloat(currentItem.value.data.y1)
-                  : currentItem.value.data.y1 || 0;
-              const x2 =
-                typeof currentItem.value.data.x2 === 'string'
-                  ? parseFloat(currentItem.value.data.x2)
-                  : currentItem.value.data.x2 || 0;
-              const y2 =
-                typeof currentItem.value.data.y2 === 'string'
-                  ? parseFloat(currentItem.value.data.y2)
-                  : currentItem.value.data.y2 || 0;
-
-              if (
-                startX <= x1 + THRESHOLD &&
-                startX >= x1 - THRESHOLD &&
-                startY <= y1 + THRESHOLD &&
-                startY >= y1 - THRESHOLD
-              ) {
-                ctx.zone = 'TOP';
-              } else if (
-                startX <= x2 + THRESHOLD &&
-                startX >= x2 - THRESHOLD &&
-                startY - THRESHOLD <= y2 + THRESHOLD &&
-                startY + THRESHOLD >= y2 - THRESHOLD
-              ) {
-                ctx.zone = 'BOTTOM';
-              } else if (
-                pDistance({ x: startX, y: startY }, { x1, x2, y1, y2 }) <=
-                  THRESHOLD &&
-                ((startX > x1 && startX < x2) ||
-                  (startX < x1 && startX > x2)) &&
-                ((startY > y1 && startY < y2) || (startY < y1 && startY > y2))
-              ) {
-                ctx.zone = 'CENTER';
-              } else {
-                ctx.zone = 'OUT';
-                initialItem.value = null;
-              }
-
-              break;
-            case 'text':
-              const xText =
-                typeof currentItem.value.data.x === 'string'
-                  ? parseFloat(currentItem.value.data.x)
-                  : currentItem.value.data.x || 0;
-              const yText =
-                typeof currentItem.value.data.y === 'string'
-                  ? parseFloat(currentItem.value.data.y)
-                  : currentItem.value.data.y || 0;
-              const widthText =
-                typeof currentItem.value.data.width === 'string'
-                  ? parseFloat(currentItem.value.data.width)
-                  : currentItem.value.data.width || 0;
-              const heightText =
-                typeof currentItem.value.data.height === 'string'
-                  ? parseFloat(currentItem.value.data.height)
-                  : currentItem.value.data.height || 0;
-
-              if (
-                startX <= xText + THRESHOLD &&
-                startX >= xText - THRESHOLD &&
-                startY <= yText + heightText / 2 + THRESHOLD &&
-                startY >= yText + heightText / 2 - THRESHOLD
-              ) {
-                ctx.zone = 'LEFT';
-              } else if (
-                startX <= xText + widthText + THRESHOLD &&
-                startX >= xText + widthText - THRESHOLD &&
-                startY <= yText + heightText / 2 + THRESHOLD &&
-                startY >= yText + heightText / 2 - THRESHOLD
-              ) {
-                ctx.zone = 'RIGHT';
-              } else if (
-                ((widthText > 0 &&
-                  startX > xText &&
-                  startX < xText + widthText) ||
-                  (widthText < 0 &&
-                    startX < xText &&
-                    startX > xText + widthText)) &&
-                ((heightText > 0 &&
-                  startY > yText &&
-                  startY < yText + heightText) ||
-                  (heightText < 0 &&
-                    startY < yText &&
-                    startY > yText + heightText))
-              ) {
-                ctx.zone = 'CENTER';
-              } else {
-                ctx.zone = 'OUT';
-                initialItem.value = null;
-              }
-
-              break;
-            case 'pen':
-              if (
-                currentItem.value.data.some(
-                  (p) =>
-                    startX <= p.x + THRESHOLD &&
-                    startX >= p.x - THRESHOLD &&
-                    startY <= p.y + THRESHOLD &&
-                    startY >= p.y - THRESHOLD
-                )
-              ) {
-                ctx.zone = 'CENTER';
-              } else {
-                ctx.zone = 'OUT';
-                initialItem.value = null;
-              }
-              console.log('pen');
-              console.log("pen currentItem",currentItem.value);
-              break;
-            default:
+            if (
+              startX <= cx + THRESHOLD &&
+              startX >= cx - THRESHOLD &&
+              startY <= cy - ry + THRESHOLD &&
+              startY >= cy - ry - THRESHOLD
+            ) {
+              ctx.zone = 'TOP';
+            } else if (
+              startX <= cx + THRESHOLD &&
+              startX >= cx - THRESHOLD &&
+              startY <= cy + ry + THRESHOLD &&
+              startY >= cy + ry - THRESHOLD
+            ) {
+              ctx.zone = 'BOTTOM';
+            } else if (
+              startY <= cy + THRESHOLD &&
+              startY >= cy - THRESHOLD &&
+              startX <= cx - rx + THRESHOLD &&
+              startX >= cx - rx - THRESHOLD
+            ) {
+              ctx.zone = 'LEFT';
+            } else if (
+              startY <= cy + THRESHOLD &&
+              startY >= cy - THRESHOLD &&
+              startX <= cx + rx + THRESHOLD &&
+              startX >= cx + rx - THRESHOLD
+            ) {
+              ctx.zone = 'RIGHT';
+            } else if (
+              ((rx > 0 && startX > cx - rx && startX < cx + rx) ||
+                (rx < 0 && startX < cx - rx && startX > cx + rx)) &&
+              ((ry > 0 && startY > cy - ry && startY < cy + ry) ||
+                (ry < 0 && startY < cy - ry && startY > cy + ry))
+            ) {
+              ctx.zone = 'CENTER';
+            } else {
               ctx.zone = 'OUT';
               initialItem.value = null;
-              break;
-          }
-        },
-        onActive: (
-          { x: currentX, y: currentY, translationX, translationY },
-          ctx
-        ) => {
-          const { startX, startY, zone, newlyCreated } = ctx;
-          if (zone === 'OUT' && newlyCreated === false) {
-            ctx.newlyCreated = true;
-            if (mode.value === 'text') {
-              runOnJS(setTextVal)('');
             }
-            if(strokeWidth && color){
-              drawNewItem(
-                mode,
-                currentItem,
-                addDoneItem,
-                { x: startX, y: startY },
-                { textBaseHeight, strokeWidth, color }
-              );
-            }
-            
-            setSelectedItem && runOnJS(setSelectedItem)(true);
-            onCancelChange && runOnJS(onCancelChange)(true);
-          }
-          switch (currentItem.value?.type) {
-            case 'pen':
-              if (
-                initialItem.value?.type === currentItem.value.type &&
-                zone === 'CENTER'
-              ) {
-                currentItem.value = {
-                  type: 'pen',
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  data: initialItem.value.data.map((p) => ({
-                    x: p.x + translationX,
-                    y: p.y + translationY,
-                  })),
-                };
-              } else {
-                currentItem.value = {
-                  type: 'pen',
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  data: currentItem.value.data.concat({
-                    x: currentX,
-                    y: currentY,
-                  }),
-                };
-              }
-              break;
-            case 'ellipse':
-              if (initialItem.value?.type === currentItem.value.type) {
-                const rx =
-                  typeof initialItem.value.data.rx === 'string'
-                    ? parseFloat(initialItem.value?.data.rx)
-                    : initialItem.value.data.rx || 0;
 
-                const ry =
-                  typeof initialItem.value.data.ry === 'string'
-                    ? parseFloat(initialItem.value.data.ry)
-                    : initialItem.value.data.ry || 0;
-
-                const cx =
-                  typeof initialItem.value.data.cx === 'string'
-                    ? parseFloat(initialItem.value.data.cx)
-                    : initialItem.value.data.cx || 0;
-
-                const cy =
-                  typeof initialItem.value.data.cy === 'string'
-                    ? parseFloat(initialItem.value.data.cy)
-                    : initialItem.value.data.cy || 0;
-
-                switch (zone) {
-                  case 'TOP':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        cx: cx,
-                        cy: cy + translationY,
-                        rx: rx,
-                        ry: ry - translationY,
-                      },
-                    };
-                    break;
-                  case 'BOTTOM':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        cx: cx,
-                        cy: cy + translationY,
-                        rx: rx,
-                        ry: ry + translationY,
-                      },
-                    };
-                    break;
-                  case 'LEFT':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        cx: cx + translationX,
-                        cy: cy,
-                        rx: rx - translationX,
-                        ry: ry,
-                      },
-                    };
-                    break;
-                  case 'RIGHT':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        cx: cx + translationX,
-                        cy: cy,
-                        rx: rx + translationX,
-                        ry: ry,
-                      },
-                    };
-                    break;
-                  case 'CENTER':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        cx: cx + translationX,
-                        cy: cy + translationY,
-                        rx: rx,
-                        ry: ry,
-                      },
-                    };
-                    break;
-                }
-              } else {
-                currentItem.value = {
-                  type: currentItem.value.type,
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  data: {
-                    cx: startX + translationX,
-                    cy: startY + translationY,
-                    rx: translationX,
-                    ry: translationY,
-                  },
-                };
-              }
-
-              break;
-            case 'rectangle':
-              if (initialItem.value?.type === currentItem.value.type) {
-                const height =
-                  typeof initialItem.value?.data.height === 'string'
-                    ? parseFloat(initialItem.value?.data.height)
-                    : initialItem.value?.data.height || 0;
-
-                const width =
-                  typeof initialItem.value?.data.width === 'string'
-                    ? parseFloat(initialItem.value?.data.width)
-                    : initialItem.value?.data.width || 0;
-
-                const x =
-                  typeof initialItem.value?.data.x === 'string'
-                    ? parseFloat(initialItem.value?.data.x)
-                    : initialItem.value?.data.x || 0;
-
-                const y =
-                  typeof initialItem.value?.data.y === 'string'
-                    ? parseFloat(initialItem.value?.data.y)
-                    : initialItem.value?.data.y || 0;
-
-                switch (zone) {
-                  case 'TOP_LEFT':
-                    currentItem.value = {
-                      type: 'rectangle',
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x: startX + translationX,
-                        y: startY + translationY,
-                        width: width - translationX,
-                        height: height - translationY,
-                      },
-                    };
-                    break;
-                  case 'TOP_RIGHT':
-                    currentItem.value = {
-                      type: 'rectangle',
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x: x,
-                        y: startY + translationY,
-                        width: width + translationX,
-                        height: height - translationY,
-                      },
-                    };
-                    break;
-                  case 'BOTTOM_LEFT':
-                    currentItem.value = {
-                      type: 'rectangle',
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x: startX + translationX,
-                        y: y,
-                        width: width - translationX,
-                        height: height + translationY,
-                      },
-                    };
-                    break;
-                  case 'BOTTOM_RIGHT':
-                    currentItem.value = {
-                      type: 'rectangle',
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x: x,
-                        y: y,
-                        width: width + translationX,
-                        height: height + translationY,
-                      },
-                    };
-                    break;
-                  case 'CENTER':
-                    currentItem.value = {
-                      type: 'rectangle',
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x: x + translationX,
-                        y: y + translationY,
-                        width: width,
-                        height: height,
-                      },
-                    };
-                    break;
-                }
-              } else {
-                currentItem.value = {
-                  type: 'rectangle',
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  data: {
-                    x: currentItem.value.data.x,
-                    y: currentItem.value.data.y,
-                    width: translationX,
-                    height: translationY,
-                  },
-                };
-              }
-              break;
-            case 'singleHead':
-            case 'doubleHead':
-              if (initialItem.value?.type === currentItem.value.type) {
-                const x1 =
-                  typeof initialItem.value?.data.x1 === 'string'
-                    ? parseFloat(initialItem.value?.data.x1)
-                    : initialItem.value?.data.x1 || 0;
-
-                const y1 =
-                  typeof initialItem.value?.data.y1 === 'string'
-                    ? parseFloat(initialItem.value?.data.y1)
-                    : initialItem.value?.data.y1 || 0;
-
-                const x2 =
-                  typeof initialItem.value?.data.x2 === 'string'
-                    ? parseFloat(initialItem.value?.data.x2)
-                    : initialItem.value?.data.x2 || 0;
-
-                const y2 =
-                  typeof initialItem.value?.data.y2 === 'string'
-                    ? parseFloat(initialItem.value?.data.y2)
-                    : initialItem.value?.data.y2 || 0;
-
-                switch (zone) {
-                  case 'TOP':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x1: x1 + translationX,
-                        y1: y1 + translationY,
-                        x2: x2,
-                        y2: y2,
-                      },
-                    };
-                    break;
-                  case 'BOTTOM':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x1: x1,
-                        y1: y1,
-                        x2: x2 + translationX,
-                        y2: y2 + translationY,
-                      },
-                    };
-                    break;
-                  case 'CENTER':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      data: {
-                        x1: x1 + translationX,
-                        y1: y1 + translationY,
-                        x2: x2 + translationX,
-                        y2: y2 + translationY,
-                      },
-                    };
-                    break;
-                }
-              } else {
-                currentItem.value = {
-                  type: currentItem.value.type,
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  data: {
-                    x1: startX,
-                    y1: startY,
-                    x2: startX + translationX,
-                    y2: startY + translationY,
-                  },
-                };
-              }
-              break;
-            case 'text':
-              if (initialItem.value?.type === currentItem.value.type) {
-                const xText =
-                  typeof initialItem.value?.data.x === 'string'
-                    ? parseFloat(initialItem.value?.data.x)
-                    : initialItem.value?.data.x || 0;
-                const yText =
-                  typeof initialItem.value?.data.y === 'string'
-                    ? parseFloat(initialItem.value?.data.y)
-                    : initialItem.value?.data.y || 0;
-                const widthText =
-                  typeof initialItem.value?.data.width === 'string'
-                    ? parseFloat(initialItem.value?.data.width)
-                    : initialItem.value?.data.width || 0;
-                const heightText =
-                  typeof initialItem.value?.data.height === 'string'
-                    ? parseFloat(initialItem.value?.data.height)
-                    : initialItem.value?.data.height || 0;
-
-                switch (zone) {
-                  case 'LEFT':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      text: currentItem.value.text,
-                      data: {
-                        x: xText + translationX,
-                        y: yText,
-                        width: widthText - translationX,
-                        height: heightText,
-                      },
-                    };
-                    break;
-                  case 'RIGHT':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      text: currentItem.value.text,
-                      data: {
-                        x: xText,
-                        y: yText,
-                        width: widthText + translationX,
-                        height: heightText,
-                      },
-                    };
-                    break;
-                  case 'CENTER':
-                    currentItem.value = {
-                      type: currentItem.value.type,
-                      strokeWidth: currentItem.value.strokeWidth,
-                      color: currentItem.value.color,
-                      text: currentItem.value.text,
-                      data: {
-                        x: xText + translationX,
-                        y: yText + translationY,
-                        width: widthText,
-                        height: heightText,
-                      },
-                    };
-                    break;
-                }
-              } else {
-                currentItem.value = {
-                  type: currentItem.value.type,
-                  strokeWidth: currentItem.value.strokeWidth,
-                  color: currentItem.value.color,
-                  text: currentItem.value.text,
-                  data: {
-                    x: startX + translationX,
-                    y: startY + translationY,
-                    width: currentItem.value.data.width,
-                    height: currentItem.value.data.height,
-                  },
-                };
-              }
-          }
-        },
-        onEnd: (_event) => {
-          panPosition.value = withTiming(0);
-
-          if (currentItem.value?.type === 'text') {
-            runOnJS(textFocus)();
-
-            currentItem.value = {
-              type: currentItem.value.type,
-              strokeWidth: currentItem.value.strokeWidth,
-              color: currentItem.value.color,
-              data: currentItem.value.data,
-              text:
-                currentItem.value.text !== DEFAULT_TEXT
-                  ? currentItem.value.text ?? ''
-                  : '',
-            };
-          }
-          console.log("currentItem.value",currentItem.value);
-          runOnJS(addScreenState)(currentItem.value);
-        },
-      },
-      []
-    );
-
-    const rightPaneStyle = useAnimatedStyle(() => {
-      return {
-        transform: [{ translateX: panPosition.value }],
-      };
-    });
-
-    useEffect(() => {
-      const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
-        showTextInput.value = false;
-      });
-
-      const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
-        // avoid events triggered by InputAccessoryView
-        if (event.endCoordinates.height > 100) {
-          showTextInput.value = true;
-        }
-      });
-
-      // cleanup function
-      return () => {
-        sudDidShow.remove();
-        sudDidHide.remove();
-      };
-    }, [showTextInput]);
-
-    const textInputRef = useRef<TextInput>(null);
-
-    const textInputContainerStyle = useAnimatedStyle(() => {
-      return {
-        height: 'auto',
-        backgroundColor: 'white',
-        display: 'flex',
-        opacity: showTextInput.value ? withTiming(1) : withTiming(0),
-      };
-    }, [showTextInput.value]);
-
-    const textInputStyle = useAnimatedStyle(() => {
-      return {
-        display: showTextInput.value ? 'flex' : 'none',
-        opacity: showTextInput.value ? withTiming(1) : withTiming(0),
-      };
-    }, [showTextInput.value]);
-
-    useAnimatedReaction(
-      () => {
-        return {
-          strokeWidth: strokeWidth?.value!,
-          color: color?.value!,
-        };
-      },
-      ({
-        strokeWidth: sw,
-        color: c,
-      }: {
-        strokeWidth: number;
-        color: hslColor;
-      }) => {
-        switch (currentItem.value?.type) {
-          case 'singleHead':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-            };
-            break;
-          case 'doubleHead':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-            };
-            break;
-          case 'ellipse':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-            };
             break;
           case 'rectangle':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-            };
-            break;
+            const x =
+              typeof currentItem.value.data.x === 'string'
+                ? parseFloat(currentItem.value.data.x)
+                : currentItem.value.data.x || 0;
+            const y =
+              typeof currentItem.value.data.y === 'string'
+                ? parseFloat(currentItem.value.data.y)
+                : currentItem.value.data.y || 0;
+            const height =
+              typeof currentItem.value.data.height === 'string'
+                ? parseFloat(currentItem.value.data.height)
+                : currentItem.value.data.height || 0;
+            const width =
+              typeof currentItem.value.data.width === 'string'
+                ? parseFloat(currentItem.value.data.width)
+                : currentItem.value.data.width || 0;
 
-          case 'pen':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-            };
+            if (startX <= x + THRESHOLD && startX >= x - THRESHOLD) {
+              if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
+                ctx.zone = 'TOP_LEFT';
+              } else if (
+                startY <= y + height + THRESHOLD &&
+                startY >= y + height - THRESHOLD
+              ) {
+                ctx.zone = 'BOTTOM_LEFT';
+              }
+            } else if (
+              startX <= x + width + THRESHOLD &&
+              startX >= x + width - THRESHOLD
+            ) {
+              if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
+                ctx.zone = 'TOP_RIGHT';
+              } else if (
+                startY <= y + height + THRESHOLD &&
+                startY >= y + height - THRESHOLD
+              ) {
+                ctx.zone = 'BOTTOM_RIGHT';
+              }
+            } else if (
+              ((width > 0 && startX > x && startX < x + width) ||
+                (width < 0 && startX < x && startX > x + width)) &&
+              ((height > 0 && startY > y && startY < y + height) ||
+                (height < 0 && startY < y && startY > y + height))
+            ) {
+              ctx.zone = 'CENTER';
+            } else {
+              ctx.zone = 'OUT';
+              initialItem.value = null;
+            }
+
+            break;
+          case 'doubleHead':
+          case 'singleHead':
+            const x1 =
+              typeof currentItem.value.data.x1 === 'string'
+                ? parseFloat(currentItem.value.data.x1)
+                : currentItem.value.data.x1 || 0;
+            const y1 =
+              typeof currentItem.value.data.y1 === 'string'
+                ? parseFloat(currentItem.value.data.y1)
+                : currentItem.value.data.y1 || 0;
+            const x2 =
+              typeof currentItem.value.data.x2 === 'string'
+                ? parseFloat(currentItem.value.data.x2)
+                : currentItem.value.data.x2 || 0;
+            const y2 =
+              typeof currentItem.value.data.y2 === 'string'
+                ? parseFloat(currentItem.value.data.y2)
+                : currentItem.value.data.y2 || 0;
+
+            if (
+              startX <= x1 + THRESHOLD &&
+              startX >= x1 - THRESHOLD &&
+              startY <= y1 + THRESHOLD &&
+              startY >= y1 - THRESHOLD
+            ) {
+              ctx.zone = 'TOP';
+            } else if (
+              startX <= x2 + THRESHOLD &&
+              startX >= x2 - THRESHOLD &&
+              startY - THRESHOLD <= y2 + THRESHOLD &&
+              startY + THRESHOLD >= y2 - THRESHOLD
+            ) {
+              ctx.zone = 'BOTTOM';
+            } else if (
+              pDistance({ x: startX, y: startY }, { x1, x2, y1, y2 }) <=
+                THRESHOLD &&
+              ((startX > x1 && startX < x2) || (startX < x1 && startX > x2)) &&
+              ((startY > y1 && startY < y2) || (startY < y1 && startY > y2))
+            ) {
+              ctx.zone = 'CENTER';
+            } else {
+              ctx.zone = 'OUT';
+              initialItem.value = null;
+            }
+
             break;
           case 'text':
-            currentItem.value = {
-              type: currentItem.value.type,
-              data: currentItem.value.data,
-              strokeWidth: sw,
-              color: c,
-              text: currentItem.value.text,
-            };
+            const xText =
+              typeof currentItem.value.data.x === 'string'
+                ? parseFloat(currentItem.value.data.x)
+                : currentItem.value.data.x || 0;
+            const yText =
+              typeof currentItem.value.data.y === 'string'
+                ? parseFloat(currentItem.value.data.y)
+                : currentItem.value.data.y || 0;
+            const widthText =
+              typeof currentItem.value.data.width === 'string'
+                ? parseFloat(currentItem.value.data.width)
+                : currentItem.value.data.width || 0;
+            const heightText =
+              typeof currentItem.value.data.height === 'string'
+                ? parseFloat(currentItem.value.data.height)
+                : currentItem.value.data.height || 0;
+
+            if (
+              startX <= xText + THRESHOLD &&
+              startX >= xText - THRESHOLD &&
+              startY <= yText + heightText / 2 + THRESHOLD &&
+              startY >= yText + heightText / 2 - THRESHOLD
+            ) {
+              ctx.zone = 'LEFT';
+            } else if (
+              startX <= xText + widthText + THRESHOLD &&
+              startX >= xText + widthText - THRESHOLD &&
+              startY <= yText + heightText / 2 + THRESHOLD &&
+              startY >= yText + heightText / 2 - THRESHOLD
+            ) {
+              ctx.zone = 'RIGHT';
+            } else if (
+              ((widthText > 0 &&
+                startX > xText &&
+                startX < xText + widthText) ||
+                (widthText < 0 &&
+                  startX < xText &&
+                  startX > xText + widthText)) &&
+              ((heightText > 0 &&
+                startY > yText &&
+                startY < yText + heightText) ||
+                (heightText < 0 &&
+                  startY < yText &&
+                  startY > yText + heightText))
+            ) {
+              ctx.zone = 'CENTER';
+            } else {
+              ctx.zone = 'OUT';
+              initialItem.value = null;
+            }
+
+            break;
+          case 'pen':
+            if (
+              currentItem.value.data.some(
+                (p) =>
+                  startX <= p.x + THRESHOLD &&
+                  startX >= p.x - THRESHOLD &&
+                  startY <= p.y + THRESHOLD &&
+                  startY >= p.y - THRESHOLD
+              )
+            ) {
+              ctx.zone = 'CENTER';
+            } else {
+              ctx.zone = 'OUT';
+              initialItem.value = null;
+            }
+            console.log('pen');
+            console.log('pen currentItem', currentItem.value);
+            break;
+          default:
+            ctx.zone = 'OUT';
+            initialItem.value = null;
             break;
         }
       },
-      [strokeWidth?.value, color?.value]
-    );
-
-    const onPressItem = useCallback(
-      (item: DrawItem, index: number) => () => {
-        setSelectedItem?.(true);
-
-        const previousItem = currentItem.value;
-
-        strokeWidth!.value = item.strokeWidth;
-        color!.value = item.color;
-        currentItem.value = item;
-
-        deleteDoneItem(index);
-
-        if (previousItem) {
-          addDoneItem(previousItem);
-        }
-
-        if (item.type === 'text') {
-          setTextVal(item.text ?? '');
-        } else {
-          textInputRef.current?.blur();
-        }
-      },
-      [
-        setSelectedItem,
-        currentItem,
-        strokeWidth,
-        color,
-        deleteDoneItem,
-        addDoneItem,
-      ]
-    );
-
-    const onTextHeightChange = useCallback(
-      (height: number) => {
-        onTextHeightUpdate(currentItem, textBaseHeight, height);
-      },
-      [currentItem, textBaseHeight]
-    );
-
-    const calculateSizes = useCallback(
-      (imageWidth: number, imageHeight: number) => {
-        if (drawRegion) {
-          setOriginalImageSize({ width: imageWidth, height: imageHeight });
-
-          const ratioImageHeight =
-            Math.round(((imageHeight * drawRegion.width) / imageWidth) * 100) /
-            100;
-
-          if (ratioImageHeight < drawRegion.height) {
-            setImageSize({
-              width: drawRegion.width,
-              height: ratioImageHeight,
-            });
-          } else {
-            setImageSize({
-              height: drawRegion.height,
-              width:
-                Math.round(
-                  ((imageWidth * drawRegion.height) / imageHeight) * 100
-                ) / 100,
-            });
+      onActive: (
+        { x: currentX, y: currentY, translationX, translationY },
+        ctx
+      ) => {
+        console.log('*********************** onActive ***********************');
+        const { startX, startY, zone, newlyCreated } = ctx;
+        if (zone === 'OUT' && newlyCreated === false) {
+          console.log('drawNewItem in onactive event');
+          ctx.newlyCreated = true;
+          if (mode.value === 'text') {
+            runOnJS(setTextVal)('');
           }
+          drawNewItem(
+            mode,
+            currentItem,
+            addDoneItem,
+            { x: startX, y: startY },
+            { textBaseHeight, strokeWidth, color }
+          );
+
+          itemIsSelected!.value = true;
+          //setSelectedItemWrapper && runOnJS(setSelectedItemWrapper)(true);
+          onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+        }
+        switch (currentItem.value?.type) {
+          case 'pen':
+            if (
+              initialItem.value?.type === currentItem.value.type &&
+              zone === 'CENTER'
+            ) {
+              currentItem.value = {
+                type: 'pen',
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                data: initialItem.value.data.map((p) => ({
+                  x: p.x + translationX,
+                  y: p.y + translationY,
+                })),
+              };
+            } else {
+              currentItem.value = {
+                type: 'pen',
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                data: currentItem.value.data.concat({
+                  x: currentX,
+                  y: currentY,
+                }),
+              };
+            }
+            break;
+          case 'ellipse':
+            if (initialItem.value?.type === currentItem.value.type) {
+              const rx =
+                typeof initialItem.value.data.rx === 'string'
+                  ? parseFloat(initialItem.value?.data.rx)
+                  : initialItem.value.data.rx || 0;
+
+              const ry =
+                typeof initialItem.value.data.ry === 'string'
+                  ? parseFloat(initialItem.value.data.ry)
+                  : initialItem.value.data.ry || 0;
+
+              const cx =
+                typeof initialItem.value.data.cx === 'string'
+                  ? parseFloat(initialItem.value.data.cx)
+                  : initialItem.value.data.cx || 0;
+
+              const cy =
+                typeof initialItem.value.data.cy === 'string'
+                  ? parseFloat(initialItem.value.data.cy)
+                  : initialItem.value.data.cy || 0;
+
+              switch (zone) {
+                case 'TOP':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      cx: cx,
+                      cy: cy + translationY,
+                      rx: rx,
+                      ry: ry - translationY,
+                    },
+                  };
+                  break;
+                case 'BOTTOM':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      cx: cx,
+                      cy: cy + translationY,
+                      rx: rx,
+                      ry: ry + translationY,
+                    },
+                  };
+                  break;
+                case 'LEFT':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      cx: cx + translationX,
+                      cy: cy,
+                      rx: rx - translationX,
+                      ry: ry,
+                    },
+                  };
+                  break;
+                case 'RIGHT':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      cx: cx + translationX,
+                      cy: cy,
+                      rx: rx + translationX,
+                      ry: ry,
+                    },
+                  };
+                  break;
+                case 'CENTER':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      cx: cx + translationX,
+                      cy: cy + translationY,
+                      rx: rx,
+                      ry: ry,
+                    },
+                  };
+                  break;
+              }
+            } else {
+              currentItem.value = {
+                type: currentItem.value.type,
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                data: {
+                  cx: startX + translationX,
+                  cy: startY + translationY,
+                  rx: translationX,
+                  ry: translationY,
+                },
+              };
+            }
+
+            break;
+          case 'rectangle':
+            if (initialItem.value?.type === currentItem.value.type) {
+              const height =
+                typeof initialItem.value?.data.height === 'string'
+                  ? parseFloat(initialItem.value?.data.height)
+                  : initialItem.value?.data.height || 0;
+
+              const width =
+                typeof initialItem.value?.data.width === 'string'
+                  ? parseFloat(initialItem.value?.data.width)
+                  : initialItem.value?.data.width || 0;
+
+              const x =
+                typeof initialItem.value?.data.x === 'string'
+                  ? parseFloat(initialItem.value?.data.x)
+                  : initialItem.value?.data.x || 0;
+
+              const y =
+                typeof initialItem.value?.data.y === 'string'
+                  ? parseFloat(initialItem.value?.data.y)
+                  : initialItem.value?.data.y || 0;
+
+              switch (zone) {
+                case 'TOP_LEFT':
+                  currentItem.value = {
+                    type: 'rectangle',
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x: startX + translationX,
+                      y: startY + translationY,
+                      width: width - translationX,
+                      height: height - translationY,
+                    },
+                  };
+                  break;
+                case 'TOP_RIGHT':
+                  currentItem.value = {
+                    type: 'rectangle',
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x: x,
+                      y: startY + translationY,
+                      width: width + translationX,
+                      height: height - translationY,
+                    },
+                  };
+                  break;
+                case 'BOTTOM_LEFT':
+                  currentItem.value = {
+                    type: 'rectangle',
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x: startX + translationX,
+                      y: y,
+                      width: width - translationX,
+                      height: height + translationY,
+                    },
+                  };
+                  break;
+                case 'BOTTOM_RIGHT':
+                  currentItem.value = {
+                    type: 'rectangle',
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x: x,
+                      y: y,
+                      width: width + translationX,
+                      height: height + translationY,
+                    },
+                  };
+                  break;
+                case 'CENTER':
+                  currentItem.value = {
+                    type: 'rectangle',
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x: x + translationX,
+                      y: y + translationY,
+                      width: width,
+                      height: height,
+                    },
+                  };
+                  break;
+              }
+            } else {
+              currentItem.value = {
+                type: 'rectangle',
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                data: {
+                  x: currentItem.value.data.x,
+                  y: currentItem.value.data.y,
+                  width: translationX,
+                  height: translationY,
+                },
+              };
+            }
+            break;
+          case 'singleHead':
+          case 'doubleHead':
+            if (initialItem.value?.type === currentItem.value.type) {
+              const x1 =
+                typeof initialItem.value?.data.x1 === 'string'
+                  ? parseFloat(initialItem.value?.data.x1)
+                  : initialItem.value?.data.x1 || 0;
+
+              const y1 =
+                typeof initialItem.value?.data.y1 === 'string'
+                  ? parseFloat(initialItem.value?.data.y1)
+                  : initialItem.value?.data.y1 || 0;
+
+              const x2 =
+                typeof initialItem.value?.data.x2 === 'string'
+                  ? parseFloat(initialItem.value?.data.x2)
+                  : initialItem.value?.data.x2 || 0;
+
+              const y2 =
+                typeof initialItem.value?.data.y2 === 'string'
+                  ? parseFloat(initialItem.value?.data.y2)
+                  : initialItem.value?.data.y2 || 0;
+
+              switch (zone) {
+                case 'TOP':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x1: x1 + translationX,
+                      y1: y1 + translationY,
+                      x2: x2,
+                      y2: y2,
+                    },
+                  };
+                  break;
+                case 'BOTTOM':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x1: x1,
+                      y1: y1,
+                      x2: x2 + translationX,
+                      y2: y2 + translationY,
+                    },
+                  };
+                  break;
+                case 'CENTER':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    data: {
+                      x1: x1 + translationX,
+                      y1: y1 + translationY,
+                      x2: x2 + translationX,
+                      y2: y2 + translationY,
+                    },
+                  };
+                  break;
+              }
+            } else {
+              currentItem.value = {
+                type: currentItem.value.type,
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                data: {
+                  x1: startX,
+                  y1: startY,
+                  x2: startX + translationX,
+                  y2: startY + translationY,
+                },
+              };
+            }
+            break;
+          case 'text':
+            if (initialItem.value?.type === currentItem.value.type) {
+              const xText =
+                typeof initialItem.value?.data.x === 'string'
+                  ? parseFloat(initialItem.value?.data.x)
+                  : initialItem.value?.data.x || 0;
+              const yText =
+                typeof initialItem.value?.data.y === 'string'
+                  ? parseFloat(initialItem.value?.data.y)
+                  : initialItem.value?.data.y || 0;
+              const widthText =
+                typeof initialItem.value?.data.width === 'string'
+                  ? parseFloat(initialItem.value?.data.width)
+                  : initialItem.value?.data.width || 0;
+              const heightText =
+                typeof initialItem.value?.data.height === 'string'
+                  ? parseFloat(initialItem.value?.data.height)
+                  : initialItem.value?.data.height || 0;
+
+              switch (zone) {
+                case 'LEFT':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    text: currentItem.value.text,
+                    data: {
+                      x: xText + translationX,
+                      y: yText,
+                      width: widthText - translationX,
+                      height: heightText,
+                    },
+                  };
+                  break;
+                case 'RIGHT':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    text: currentItem.value.text,
+                    data: {
+                      x: xText,
+                      y: yText,
+                      width: widthText + translationX,
+                      height: heightText,
+                    },
+                  };
+                  break;
+                case 'CENTER':
+                  currentItem.value = {
+                    type: currentItem.value.type,
+                    strokeWidth: currentItem.value.strokeWidth,
+                    color: currentItem.value.color,
+                    text: currentItem.value.text,
+                    data: {
+                      x: xText + translationX,
+                      y: yText + translationY,
+                      width: widthText,
+                      height: heightText,
+                    },
+                  };
+                  break;
+              }
+            } else {
+              currentItem.value = {
+                type: currentItem.value.type,
+                strokeWidth: currentItem.value.strokeWidth,
+                color: currentItem.value.color,
+                text: currentItem.value.text,
+                data: {
+                  x: startX + translationX,
+                  y: startY + translationY,
+                  width: currentItem.value.data.width,
+                  height: currentItem.value.data.height,
+                },
+              };
+            }
         }
       },
-      [drawRegion]
-    );
+      onEnd: (_event) => {
+        console.log('*********************** onEnd ***********************');
+        panPosition.value = withTiming(0);
 
-    useEffect(() => {
-      if (drawRegion && image) {
-        if (typeof image === 'number') {
-          const infos = Image.resolveAssetSource(image);
+        if (currentItem.value?.type === 'text') {
+          runOnJS(textFocus)();
 
-          calculateSizes(infos.width, infos.height);
-        } else if (image.uri) {
-          Image.getSize(image.uri, (imageWidth, imageHeight) => {
-            calculateSizes(imageWidth, imageHeight);
+          currentItem.value = {
+            type: currentItem.value.type,
+            strokeWidth: currentItem.value.strokeWidth,
+            color: currentItem.value.color,
+            data: currentItem.value.data,
+            text:
+              currentItem.value.text !== DEFAULT_TEXT
+                ? currentItem.value.text ?? ''
+                : '',
+          };
+        }
+        runOnJS(addScreenStateWrapper)(currentItem.value);
+      },
+    },
+    []
+  );
+
+  const rightPaneStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: panPosition.value }],
+    };
+  });
+
+  useEffect(() => {
+    const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      showTextInput.value = false;
+    });
+
+    const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
+      // avoid events triggered by InputAccessoryView
+      if (event.endCoordinates.height > 100) {
+        showTextInput.value = true;
+      }
+    });
+
+    // cleanup function
+    return () => {
+      sudDidShow.remove();
+      sudDidHide.remove();
+    };
+  }, [showTextInput]);
+
+  const textInputRef = useRef<TextInput>(null);
+
+  const textInputContainerStyle = useAnimatedStyle(() => {
+    return {
+      height: 'auto',
+      backgroundColor: 'white',
+      display: 'flex',
+      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
+    };
+  }, [showTextInput.value]);
+
+  const textInputStyle = useAnimatedStyle(() => {
+    return {
+      display: showTextInput.value ? 'flex' : 'none',
+      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
+    };
+  }, [showTextInput.value]);
+
+  useAnimatedReaction(
+    () => {
+      return {
+        strokeWidth: strokeWidth.value,
+        color: color?.value!,
+      };
+    },
+    ({
+      strokeWidth: sw,
+      color: c,
+    }: {
+      strokeWidth: number;
+      color: hslColor;
+    }) => {
+      switch (currentItem.value?.type) {
+        case 'singleHead':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+          };
+          break;
+        case 'doubleHead':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+          };
+          break;
+        case 'ellipse':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+          };
+          break;
+        case 'rectangle':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+          };
+          break;
+
+        case 'pen':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+          };
+          break;
+        case 'text':
+          currentItem.value = {
+            type: currentItem.value.type,
+            data: currentItem.value.data,
+            strokeWidth: sw,
+            color: c,
+            text: currentItem.value.text,
+          };
+          break;
+      }
+    },
+    [strokeWidth.value, color?.value]
+  );
+
+  const onPressItem = useCallback(
+    (item: DrawItem, index: number) => () => {
+      console.log(
+        '************************ onPressItem *************************'
+      );
+      itemIsSelected!.value = true;
+
+      const previousItem = currentItem.value;
+
+      strokeWidth.value = item.strokeWidth;
+      color!.value = item.color;
+      currentItem.value = item;
+
+      deleteDoneItem(index);
+
+      if (previousItem) {
+        addDoneItem(previousItem);
+      }
+
+      if (item.type === 'text') {
+        setTextVal(item.text ?? '');
+      } else {
+        textInputRef.current?.blur();
+      }
+    },
+    [
+      itemIsSelected,
+      currentItem,
+      strokeWidth,
+      color,
+      deleteDoneItem,
+      addDoneItem,
+    ]
+  );
+
+  const onTextHeightChange = useCallback(
+    (height: number) => {
+      onTextHeightUpdate(currentItem, textBaseHeight, height);
+    },
+    [currentItem, textBaseHeight]
+  );
+
+  const calculateSizes = useCallback(
+    (imageWidth: number, imageHeight: number) => {
+      if (drawRegion) {
+        setOriginalImageSize({ width: imageWidth, height: imageHeight });
+
+        const ratioImageHeight =
+          Math.round(((imageHeight * drawRegion.width) / imageWidth) * 100) /
+          100;
+
+        if (ratioImageHeight < drawRegion.height) {
+          setImageSize({
+            width: drawRegion.width,
+            height: ratioImageHeight,
+          });
+        } else {
+          setImageSize({
+            height: drawRegion.height,
+            width:
+              Math.round(
+                ((imageWidth * drawRegion.height) / imageHeight) * 100
+              ) / 100,
           });
         }
       }
-    }, [image, drawRegion, calculateSizes]);
+    },
+    [drawRegion]
+  );
 
-    return (
-      <View style={styles.container}>
-        <View
-          style={[
-            styles.drawZone,
-            { backgroundColor: backgroundColor ?? '#FFF' },
-          ]}
-          onLayout={(event) => {
-            setDrawRegion({
-              height: event.nativeEvent.layout.height,
-              width: event.nativeEvent.layout.width,
-              
-            });
-          }}
-        >
-          <PanGestureHandler onGestureEvent={onGestureEvent}>
-            <Animated.View style={imageSize || drawRegion} >
-              <View ref={drawContainer}  >
-                {image ? (
-                  imageSize && originalImageSize ? (
-                    <ViewShot
-                      ref={viewShot}
-                      options={{
-                        format: 'jpg',
-                        quality: 1,
-                      }}
-                      style={imageSize}
-                    >
-                      <ImageBackground source={image} style={styles.bgImage}>
-                        <DrawPad
-                          currentItem={currentItem}
-                          doneItems={drawState.doneItems}
-                          onPressItem={onPressItem}
-                          onTextHeightChange={onTextHeightChange}
-                        />
-                      </ImageBackground>
-                    </ViewShot>
-                  ) : null
-                ) : drawRegion ? (
+  useEffect(() => {
+    if (drawRegion && image) {
+      if (typeof image === 'number') {
+        const infos = Image.resolveAssetSource(image);
+
+        calculateSizes(infos.width, infos.height);
+      } else if (image.uri) {
+        Image.getSize(image.uri, (imageWidth, imageHeight) => {
+          calculateSizes(imageWidth, imageHeight);
+        });
+      }
+    }
+  }, [image, drawRegion, calculateSizes]);
+
+  return (
+    <View style={styles.container}>
+      <View
+        style={[
+          styles.drawZone,
+          { backgroundColor: backgroundColor ?? '#FFF' },
+        ]}
+        onLayout={(event) => {
+          setDrawRegion({
+            height: event.nativeEvent.layout.height,
+            width: event.nativeEvent.layout.width,
+          });
+        }}
+      >
+        <PanGestureHandler onGestureEvent={onGestureEvent}>
+          <Animated.View style={imageSize || drawRegion}>
+            <View ref={drawContainer}>
+              {image ? (
+                imageSize && originalImageSize ? (
                   <ViewShot
                     ref={viewShot}
                     options={{
                       format: 'jpg',
                       quality: 1,
-                      ...drawRegion,
                     }}
-                    style={drawRegion}
+                    style={imageSize}
                   >
-                    <DrawPad
-                      currentItem={currentItem}
-                      doneItems={drawState.doneItems}
-                      onPressItem={onPressItem}
-                      onTextHeightChange={onTextHeightChange}
-                    />
+                    <ImageBackground source={image} style={styles.bgImage}>
+                      <DrawPad
+                        currentItem={currentItem}
+                        doneItems={drawState.doneItems}
+                        onPressItem={onPressItem}
+                        onTextHeightChange={onTextHeightChange}
+                      />
+                    </ImageBackground>
                   </ViewShot>
-                ) : null}
-              </View>
-            </Animated.View>
-          </PanGestureHandler>
-        </View>
+                ) : null
+              ) : drawRegion ? (
+                <ViewShot
+                  ref={viewShot}
+                  options={{
+                    format: 'jpg',
+                    quality: 1,
+                    ...drawRegion,
+                  }}
+                  style={drawRegion}
+                >
+                  <DrawPad
+                    currentItem={currentItem}
+                    doneItems={drawState.doneItems}
+                    onPressItem={onPressItem}
+                    onTextHeightChange={onTextHeightChange}
+                  />
+                </ViewShot>
+              ) : null}
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+      </View>
 
-        {/*Platform.OS === 'ios' ? (
+      {/*Platform.OS === 'ios' ? (
           <InputAccessoryView>
             <AnimatedTextInput
               ref={textInputRef}
@@ -1423,9 +1440,8 @@ const DrawCore = React.forwardRef<
             />
           </Animated.View>
         )*/}
-      </View>
-    );
-  }
-);
+    </View>
+  );
+});
 
 export default DrawCore;

@@ -10,32 +10,34 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { View, StyleSheet, Text, ImageBackground } from 'react-native';
-import { sliderStyle, TRACK_R} from './sliderStyle';
+import { View } from 'react-native';
+import { sliderStyle, TRACK_R } from './sliderStyle';
+import useDrawHook from '../DrawCore/useDrawHook';
 //import Rectangle from '../DrawWithOptions/rectangle.svg';
 
 const StrokeSlider = ({
   minValue,
   maxValue,
-  stroke,
-  onStrokeChange,
 }: {
   minValue: number;
   maxValue: number;
-  stroke: Animated.SharedValue<number>;
-  onStrokeChange: () => void;
 }) => {
+  const { onColorStrokeChange, strokeWidth } = useDrawHook();
+
   const sliderWidth = useSharedValue(0);
 
-  const [text, setText] = useState(stroke.value);
+  const [text, setText] = useState(strokeWidth!.value);
 
   const position = useDerivedValue(() => {
-    runOnJS(setText)(Math.round(stroke.value));
+    runOnJS(setText)(Math.round(strokeWidth!.value));
     return (
-      (sliderWidth.value / (maxValue - minValue)) * (stroke.value - minValue)
+      (sliderWidth.value / (maxValue - minValue)) *
+      (strokeWidth!.value - minValue)
     );
   });
-
+  const wrapperOnColorStrokeChange = () => {
+    onColorStrokeChange();
+  };
   const onGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
     { startX: number }
@@ -45,7 +47,7 @@ const StrokeSlider = ({
         ctx.startX = x;
       },
       onActive: ({ translationX }, { startX }) => {
-        stroke.value = Math.min(
+        strokeWidth!.value = Math.min(
           maxValue,
           Math.max(
             minValue,
@@ -56,7 +58,7 @@ const StrokeSlider = ({
         );
       },
       onEnd: () => {
-        runOnJS(onStrokeChange)();
+        runOnJS(wrapperOnColorStrokeChange)();
       },
     },
     []
@@ -69,7 +71,7 @@ const StrokeSlider = ({
   }, [position.value]);
 
   return (
-    <View style={sliderStyle.container} >
+    <View style={sliderStyle.container}>
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View style={sliderStyle.container}>
           {/*
@@ -80,7 +82,7 @@ const StrokeSlider = ({
               sliderWidth.value = event.nativeEvent.layout.width;
             }}
             style={{
-              width: "100%",
+              width: '100%',
             }}
           />
           <Animated.View style={[sliderStyle.thumb, style]} />

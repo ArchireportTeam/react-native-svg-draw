@@ -40,3 +40,15 @@ export type LinearGradientType = {
   start?: { x: number; y: number };
   end?: { x: number; y: number };
 };
+
+export type Action =
+  | { type: 'ADD_DONE_ITEM'; item: DrawItem }
+  | { type: 'DELETE_DONE_ITEM'; indice: number }
+  | {
+      type: 'ADD_SCREEN_STATE';
+      currentItem: DrawItem | null;
+    }
+  | {
+      type: 'CANCEL';
+      onCancelChange?: (cancel: boolean) => void;
+    };

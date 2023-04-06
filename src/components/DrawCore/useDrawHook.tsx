@@ -1,11 +1,11 @@
 import { DrawContext } from './DrawContext';
 import { useCallback, useContext } from 'react';
-import type { DrawItem } from 'src/types';
 
 const useDrawHook = () => {
   const {
     drawState,
-    setDrawState,
+    dispatchDrawStates,
+    //setDrawState,
     strokeWidth,
     color,
     currentItem,
@@ -16,9 +16,11 @@ const useDrawHook = () => {
     setCancelEnabled,
   } = useContext(DrawContext);
 
+  /*
   const addDoneItem = useCallback(
     (item: DrawItem) => {
       'worklet';
+      console.log('******************** addDoneItem *********************');
       setDrawState((previousDrawState) => ({
         ...previousDrawState,
         doneItems: drawState.doneItems.concat(item),
@@ -30,6 +32,7 @@ const useDrawHook = () => {
   const deleteDoneItem = useCallback(
     (indice: number) => {
       'worklet';
+      console.log('******************** deleteDoneItem *********************');
       setDrawState((previousDrawState) => ({
         ...previousDrawState,
         doneItems: previousDrawState.doneItems.splice(indice, 1),
@@ -41,6 +44,7 @@ const useDrawHook = () => {
   const addScreenState = useCallback(
     (item: DrawItem | null) => {
       'worklet';
+      console.log('******************** addScreenState *********************');
       setDrawState((previousDrawState) => ({
         ...previousDrawState,
         screenStates: previousDrawState.screenStates.concat([
@@ -53,38 +57,51 @@ const useDrawHook = () => {
     [setDrawState]
   );
 
-  const onColorStrokeChange = useCallback(() => {
-    'worklet';
-    //console.log('onColorStrokeChange');
-    if (currentItem?.value) {
-      addScreenState(currentItem.value);
-    }
-  }, [addScreenState, currentItem?.value]);
+  
 
   const cancelAction = useCallback(() => {
     'worklet';
-    const len = drawState.screenStates.length;
-    if (len > 1) {
-      const newScreenStates = drawState.screenStates;
-      newScreenStates.pop();
-      setDrawState({
-        doneItems: drawState.screenStates[len - 2] ?? [],
-        screenStates: newScreenStates,
+    console.log('******************** cancelAction *********************');
+
+    setDrawState((previousDrawState) => {
+      const newScreenStates = previousDrawState.screenStates;
+      const len = newScreenStates.length;
+      if (len > 1) {
+        newScreenStates.pop();
+        return {
+          doneItems: previousDrawState.screenStates[len - 2] ?? [],
+          screenStates: newScreenStates,
+        };
+      } else {
+        return previousDrawState;
+      }
+    });
+  }, [setDrawState]);
+*/
+  const onColorStrokeChange = useCallback(() => {
+    'worklet';
+    console.log(
+      '******************** onColorStrokeChange *********************'
+    );
+    if (currentItem?.value) {
+      dispatchDrawStates({
+        type: 'ADD_SCREEN_STATE',
+        currentItem: currentItem.value,
       });
-    } else {
-      return drawState;
     }
-  }, [drawState, setDrawState]);
+  }, [currentItem?.value, dispatchDrawStates]);
 
   return {
     drawState: drawState!,
+    dispatchDrawStates,
     currentItem: currentItem!,
     strokeWidth: strokeWidth!,
     color: color!,
+    /*
     addDoneItem,
     deleteDoneItem,
     addScreenState,
-    cancelAction,
+    cancelAction,*/
     onColorStrokeChange,
     drawingMode,
     setDrawingMode,

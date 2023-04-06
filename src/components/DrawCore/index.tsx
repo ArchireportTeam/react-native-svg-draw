@@ -15,6 +15,8 @@ import {
   Image,
   ImageRequireSource,
   ImageURISource,
+  InputAccessoryView,
+  Platform,
 } from 'react-native';
 import Animated, {
   runOnJS,
@@ -41,19 +43,16 @@ import DrawPad from './DrawPad';
 import ViewShot from 'react-native-view-shot';
 import useDrawHook from './useDrawHook';
 
-const RIGHT_PANE_WIDTH = 448;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   drawZone: {
     flex: 1,
+    alignContent: 'center',
+    alignItems: 'center',
   },
-  strokeSliderContainer: {
-    flex: 1,
-  },
-  colorSliderContainer: { flex: 1, paddingTop: 15 },
+
   bgImage: { width: '100%', height: '100%' },
   textInput: {
     backgroundColor: '#000000c5',
@@ -227,78 +226,6 @@ const onTextHeightUpdate = (
     };
   }
 };
-/*
-type Action =
-  | { type: 'ADD_DONE_ITEM'; item: DrawItem }
-  | { type: 'DELETE_DONE_ITEM'; indice: number }
-  | {
-      type: 'ADD_SCREEN_STATE';
-      currentItem: DrawItem | null;
-    }
-  | {
-      type: 'CANCEL';
-      onCancelChange?: (cancel: boolean) => void;
-    };
-
-
-const reducerDrawStates = (
-  drawStates: DrawState,
-  action: Action
-): DrawState => {
-  'worklet';
-  switch (action.type) {
-    case 'ADD_DONE_ITEM':
-      return {
-        ...drawStates,
-        doneItems: drawStates.doneItems.concat(action.item),
-      };
-    case 'DELETE_DONE_ITEM':
-      const newDoneItems = drawStates.doneItems;
-      newDoneItems.splice(action.indice, 1);
-      return {
-        ...drawStates,
-        doneItems: newDoneItems,
-      };
-    case 'ADD_SCREEN_STATE':
-      if (action.currentItem) {
-        return {
-          ...drawStates,
-          screenStates: drawStates.screenStates.concat([
-            [...drawStates.doneItems, action.currentItem],
-          ]),
-        };
-      } else {
-        return {
-          ...drawStates,
-          screenStates: drawStates.screenStates.concat([
-            [...drawStates.doneItems],
-          ]),
-        };
-      }
-
-    case 'CANCEL':
-      const len = drawStates.screenStates.length;
-      if (len > 1) {
-        const newScreenStates = drawStates.screenStates;
-        newScreenStates.pop();
-        if (newScreenStates.length === 1) {
-          action.onCancelChange?.(false);
-        }
-        return {
-          doneItems: drawStates.screenStates[len - 2] ?? [],
-          screenStates: newScreenStates,
-        };
-      } else {
-        return drawStates;
-      }
-  }
-};
-
-const initialState: DrawState = {
-  doneItems: [],
-  screenStates: [[]],
-};
-*/
 
 const DrawCore = React.forwardRef<
   DrawCoreProps,
@@ -309,19 +236,21 @@ const DrawCore = React.forwardRef<
 >(({ image, backgroundColor }, ref) => {
   const {
     drawState,
+    dispatchDrawStates,
     strokeWidth,
     color,
+    /*
     addDoneItem,
     deleteDoneItem,
     addScreenState,
     cancelAction,
+    */
     currentItem,
     drawingMode,
     itemIsSelected,
     setCancelEnabled,
-    cancelEnabled,
   } = useDrawHook();
-  console.log('drawState.doneItems.length', drawState.doneItems.length);
+
   const onCancelChangeWrapper = (arg: boolean) => {
     setCancelEnabled(arg);
   };
@@ -351,31 +280,38 @@ const DrawCore = React.forwardRef<
     );
 */
   const textBaseHeight = useSharedValue<number | null>(null);
-  /*
-    const addDoneItem = useCallback((item: DrawItem) => {
+
+  const addDoneItem = useCallback(
+    (item: DrawItem) => {
       dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: item });
-    }, []);
-*/
-  /*
-    const deleteDoneItem = useCallback((indice: number) => {
+    },
+    [dispatchDrawStates]
+  );
+
+  const deleteDoneItem = useCallback(
+    (indice: number) => {
       dispatchDrawStates({ type: 'DELETE_DONE_ITEM', indice: indice });
-    }, []);
-*/
-  /*
-    const addScreenStates = useCallback((item: DrawItem | null) => {
+    },
+    [dispatchDrawStates]
+  );
+
+  const addScreenStates = useCallback(
+    (item: DrawItem | null) => {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',
         currentItem: item,
       });
-    }, []);
+    },
+    [dispatchDrawStates]
+  );
 
-    const cancelAction = useCallback(() => {
-      dispatchDrawStates({
-        type: 'CANCEL',
-        onCancelChange: onCancelChange,
-      });
-    }, [onCancelChange]);
-*/
+  const cancelAction = useCallback(() => {
+    dispatchDrawStates({
+      type: 'CANCEL',
+      onCancelChange: setCancelEnabled,
+    });
+  }, [dispatchDrawStates, setCancelEnabled]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -383,7 +319,7 @@ const DrawCore = React.forwardRef<
       deleteSelectedItem: () => {
         if (currentItem.value) {
           currentItem.value = null;
-          addScreenState(null);
+          addScreenStates(null);
         }
         itemIsSelected!.value = false;
         setCancelEnabled?.(true);
@@ -407,7 +343,7 @@ const DrawCore = React.forwardRef<
       currentItem,
       itemIsSelected,
       setCancelEnabled,
-      addScreenState,
+      addScreenStates,
       cancelAction,
       addDoneItem,
     ]
@@ -419,6 +355,8 @@ const DrawCore = React.forwardRef<
 
   useEffect(() => {
     console.log('********* useEffect *********');
+    console.log('currentItem', currentItem.value);
+
     mode.value = drawingMode;
     if (currentItem.value) {
       addDoneItem(currentItem.value);
@@ -444,14 +382,14 @@ const DrawCore = React.forwardRef<
         addScreenStates(currentItem.value);
       }
     }, [addScreenStates, currentItem.value]);
-
-*/
+  */
+  /*
   const addScreenStateWrapper = (item: DrawItem | null) => {
     console.log('addScreenStateWrapper item:', item);
     addScreenState(item);
   };
-
-  const panPosition = useSharedValue(0);
+*/
+  //const panPosition = useSharedValue(0);
 
   const showTextInput = useSharedValue(false);
 
@@ -474,696 +412,683 @@ const DrawCore = React.forwardRef<
   const onGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
     Context
-  >(
-    {
-      onStart: ({ x: startX, y: startY }, ctx) => {
-        console.log('*********************** onStart ***********************');
-        ctx.startX = startX;
-        ctx.startY = startY;
-        ctx.newlyCreated = false;
+  >({
+    onStart: ({ x: startX, y: startY }, ctx) => {
+      console.log('*********************** onStart ***********************');
+      ctx.startX = startX;
+      ctx.startY = startY;
+      ctx.newlyCreated = false;
 
-        panPosition.value = withTiming(RIGHT_PANE_WIDTH);
+      //panPosition.value = withTiming(RIGHT_PANE_WIDTH);
 
-        initialItem.value = currentItem.value;
-        console.log('currentItem.value', currentItem.value);
-        switch (currentItem.value?.type) {
-          case 'ellipse':
-            const cx =
-              typeof currentItem.value.data.cx === 'string'
-                ? parseFloat(currentItem.value.data.cx)
-                : currentItem.value.data.cx || 0;
-            const cy =
-              typeof currentItem.value.data.cy === 'string'
-                ? parseFloat(currentItem.value.data.cy)
-                : currentItem.value.data.cy || 0;
-            const rx =
-              typeof currentItem.value.data.rx === 'string'
-                ? parseFloat(currentItem.value.data.rx)
-                : currentItem.value.data.rx || 0;
-            const ry =
-              typeof currentItem.value.data.ry === 'string'
-                ? parseFloat(currentItem.value.data.ry)
-                : currentItem.value.data.ry || 0;
+      initialItem.value = currentItem.value;
+      console.log('currentItem.value', currentItem.value);
+      switch (currentItem.value?.type) {
+        case 'ellipse':
+          const cx =
+            typeof currentItem.value.data.cx === 'string'
+              ? parseFloat(currentItem.value.data.cx)
+              : currentItem.value.data.cx || 0;
+          const cy =
+            typeof currentItem.value.data.cy === 'string'
+              ? parseFloat(currentItem.value.data.cy)
+              : currentItem.value.data.cy || 0;
+          const rx =
+            typeof currentItem.value.data.rx === 'string'
+              ? parseFloat(currentItem.value.data.rx)
+              : currentItem.value.data.rx || 0;
+          const ry =
+            typeof currentItem.value.data.ry === 'string'
+              ? parseFloat(currentItem.value.data.ry)
+              : currentItem.value.data.ry || 0;
 
-            if (
-              startX <= cx + THRESHOLD &&
-              startX >= cx - THRESHOLD &&
-              startY <= cy - ry + THRESHOLD &&
-              startY >= cy - ry - THRESHOLD
-            ) {
-              ctx.zone = 'TOP';
-            } else if (
-              startX <= cx + THRESHOLD &&
-              startX >= cx - THRESHOLD &&
-              startY <= cy + ry + THRESHOLD &&
-              startY >= cy + ry - THRESHOLD
-            ) {
-              ctx.zone = 'BOTTOM';
-            } else if (
-              startY <= cy + THRESHOLD &&
-              startY >= cy - THRESHOLD &&
-              startX <= cx - rx + THRESHOLD &&
-              startX >= cx - rx - THRESHOLD
-            ) {
-              ctx.zone = 'LEFT';
-            } else if (
-              startY <= cy + THRESHOLD &&
-              startY >= cy - THRESHOLD &&
-              startX <= cx + rx + THRESHOLD &&
-              startX >= cx + rx - THRESHOLD
-            ) {
-              ctx.zone = 'RIGHT';
-            } else if (
-              ((rx > 0 && startX > cx - rx && startX < cx + rx) ||
-                (rx < 0 && startX < cx - rx && startX > cx + rx)) &&
-              ((ry > 0 && startY > cy - ry && startY < cy + ry) ||
-                (ry < 0 && startY < cy - ry && startY > cy + ry))
-            ) {
-              ctx.zone = 'CENTER';
-            } else {
-              ctx.zone = 'OUT';
-              initialItem.value = null;
-            }
-
-            break;
-          case 'rectangle':
-            const x =
-              typeof currentItem.value.data.x === 'string'
-                ? parseFloat(currentItem.value.data.x)
-                : currentItem.value.data.x || 0;
-            const y =
-              typeof currentItem.value.data.y === 'string'
-                ? parseFloat(currentItem.value.data.y)
-                : currentItem.value.data.y || 0;
-            const height =
-              typeof currentItem.value.data.height === 'string'
-                ? parseFloat(currentItem.value.data.height)
-                : currentItem.value.data.height || 0;
-            const width =
-              typeof currentItem.value.data.width === 'string'
-                ? parseFloat(currentItem.value.data.width)
-                : currentItem.value.data.width || 0;
-
-            if (startX <= x + THRESHOLD && startX >= x - THRESHOLD) {
-              if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-                ctx.zone = 'TOP_LEFT';
-              } else if (
-                startY <= y + height + THRESHOLD &&
-                startY >= y + height - THRESHOLD
-              ) {
-                ctx.zone = 'BOTTOM_LEFT';
-              }
-            } else if (
-              startX <= x + width + THRESHOLD &&
-              startX >= x + width - THRESHOLD
-            ) {
-              if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-                ctx.zone = 'TOP_RIGHT';
-              } else if (
-                startY <= y + height + THRESHOLD &&
-                startY >= y + height - THRESHOLD
-              ) {
-                ctx.zone = 'BOTTOM_RIGHT';
-              }
-            } else if (
-              ((width > 0 && startX > x && startX < x + width) ||
-                (width < 0 && startX < x && startX > x + width)) &&
-              ((height > 0 && startY > y && startY < y + height) ||
-                (height < 0 && startY < y && startY > y + height))
-            ) {
-              ctx.zone = 'CENTER';
-            } else {
-              ctx.zone = 'OUT';
-              initialItem.value = null;
-            }
-
-            break;
-          case 'doubleHead':
-          case 'singleHead':
-            const x1 =
-              typeof currentItem.value.data.x1 === 'string'
-                ? parseFloat(currentItem.value.data.x1)
-                : currentItem.value.data.x1 || 0;
-            const y1 =
-              typeof currentItem.value.data.y1 === 'string'
-                ? parseFloat(currentItem.value.data.y1)
-                : currentItem.value.data.y1 || 0;
-            const x2 =
-              typeof currentItem.value.data.x2 === 'string'
-                ? parseFloat(currentItem.value.data.x2)
-                : currentItem.value.data.x2 || 0;
-            const y2 =
-              typeof currentItem.value.data.y2 === 'string'
-                ? parseFloat(currentItem.value.data.y2)
-                : currentItem.value.data.y2 || 0;
-
-            if (
-              startX <= x1 + THRESHOLD &&
-              startX >= x1 - THRESHOLD &&
-              startY <= y1 + THRESHOLD &&
-              startY >= y1 - THRESHOLD
-            ) {
-              ctx.zone = 'TOP';
-            } else if (
-              startX <= x2 + THRESHOLD &&
-              startX >= x2 - THRESHOLD &&
-              startY - THRESHOLD <= y2 + THRESHOLD &&
-              startY + THRESHOLD >= y2 - THRESHOLD
-            ) {
-              ctx.zone = 'BOTTOM';
-            } else if (
-              pDistance({ x: startX, y: startY }, { x1, x2, y1, y2 }) <=
-                THRESHOLD &&
-              ((startX > x1 && startX < x2) || (startX < x1 && startX > x2)) &&
-              ((startY > y1 && startY < y2) || (startY < y1 && startY > y2))
-            ) {
-              ctx.zone = 'CENTER';
-            } else {
-              ctx.zone = 'OUT';
-              initialItem.value = null;
-            }
-
-            break;
-          case 'text':
-            const xText =
-              typeof currentItem.value.data.x === 'string'
-                ? parseFloat(currentItem.value.data.x)
-                : currentItem.value.data.x || 0;
-            const yText =
-              typeof currentItem.value.data.y === 'string'
-                ? parseFloat(currentItem.value.data.y)
-                : currentItem.value.data.y || 0;
-            const widthText =
-              typeof currentItem.value.data.width === 'string'
-                ? parseFloat(currentItem.value.data.width)
-                : currentItem.value.data.width || 0;
-            const heightText =
-              typeof currentItem.value.data.height === 'string'
-                ? parseFloat(currentItem.value.data.height)
-                : currentItem.value.data.height || 0;
-
-            if (
-              startX <= xText + THRESHOLD &&
-              startX >= xText - THRESHOLD &&
-              startY <= yText + heightText / 2 + THRESHOLD &&
-              startY >= yText + heightText / 2 - THRESHOLD
-            ) {
-              ctx.zone = 'LEFT';
-            } else if (
-              startX <= xText + widthText + THRESHOLD &&
-              startX >= xText + widthText - THRESHOLD &&
-              startY <= yText + heightText / 2 + THRESHOLD &&
-              startY >= yText + heightText / 2 - THRESHOLD
-            ) {
-              ctx.zone = 'RIGHT';
-            } else if (
-              ((widthText > 0 &&
-                startX > xText &&
-                startX < xText + widthText) ||
-                (widthText < 0 &&
-                  startX < xText &&
-                  startX > xText + widthText)) &&
-              ((heightText > 0 &&
-                startY > yText &&
-                startY < yText + heightText) ||
-                (heightText < 0 &&
-                  startY < yText &&
-                  startY > yText + heightText))
-            ) {
-              ctx.zone = 'CENTER';
-            } else {
-              ctx.zone = 'OUT';
-              initialItem.value = null;
-            }
-
-            break;
-          case 'pen':
-            if (
-              currentItem.value.data.some(
-                (p) =>
-                  startX <= p.x + THRESHOLD &&
-                  startX >= p.x - THRESHOLD &&
-                  startY <= p.y + THRESHOLD &&
-                  startY >= p.y - THRESHOLD
-              )
-            ) {
-              ctx.zone = 'CENTER';
-            } else {
-              ctx.zone = 'OUT';
-              initialItem.value = null;
-            }
-            console.log('pen');
-            console.log('pen currentItem', currentItem.value);
-            break;
-          default:
+          if (
+            startX <= cx + THRESHOLD &&
+            startX >= cx - THRESHOLD &&
+            startY <= cy - ry + THRESHOLD &&
+            startY >= cy - ry - THRESHOLD
+          ) {
+            ctx.zone = 'TOP';
+          } else if (
+            startX <= cx + THRESHOLD &&
+            startX >= cx - THRESHOLD &&
+            startY <= cy + ry + THRESHOLD &&
+            startY >= cy + ry - THRESHOLD
+          ) {
+            ctx.zone = 'BOTTOM';
+          } else if (
+            startY <= cy + THRESHOLD &&
+            startY >= cy - THRESHOLD &&
+            startX <= cx - rx + THRESHOLD &&
+            startX >= cx - rx - THRESHOLD
+          ) {
+            ctx.zone = 'LEFT';
+          } else if (
+            startY <= cy + THRESHOLD &&
+            startY >= cy - THRESHOLD &&
+            startX <= cx + rx + THRESHOLD &&
+            startX >= cx + rx - THRESHOLD
+          ) {
+            ctx.zone = 'RIGHT';
+          } else if (
+            ((rx > 0 && startX > cx - rx && startX < cx + rx) ||
+              (rx < 0 && startX < cx - rx && startX > cx + rx)) &&
+            ((ry > 0 && startY > cy - ry && startY < cy + ry) ||
+              (ry < 0 && startY < cy - ry && startY > cy + ry))
+          ) {
+            ctx.zone = 'CENTER';
+          } else {
             ctx.zone = 'OUT';
             initialItem.value = null;
-            break;
-        }
-      },
-      onActive: (
-        { x: currentX, y: currentY, translationX, translationY },
-        ctx
-      ) => {
-        console.log('*********************** onActive ***********************');
-        const { startX, startY, zone, newlyCreated } = ctx;
-        if (zone === 'OUT' && newlyCreated === false) {
-          console.log('drawNewItem in onactive event');
-          ctx.newlyCreated = true;
-          if (mode.value === 'text') {
-            runOnJS(setTextVal)('');
           }
-          drawNewItem(
-            mode,
-            currentItem,
-            addDoneItem,
-            { x: startX, y: startY },
-            { textBaseHeight, strokeWidth, color }
-          );
 
-          itemIsSelected!.value = true;
-          //setSelectedItemWrapper && runOnJS(setSelectedItemWrapper)(true);
-          onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
-        }
-        switch (currentItem.value?.type) {
-          case 'pen':
-            if (
-              initialItem.value?.type === currentItem.value.type &&
-              zone === 'CENTER'
+          break;
+        case 'rectangle':
+          const x =
+            typeof currentItem.value.data.x === 'string'
+              ? parseFloat(currentItem.value.data.x)
+              : currentItem.value.data.x || 0;
+          const y =
+            typeof currentItem.value.data.y === 'string'
+              ? parseFloat(currentItem.value.data.y)
+              : currentItem.value.data.y || 0;
+          const height =
+            typeof currentItem.value.data.height === 'string'
+              ? parseFloat(currentItem.value.data.height)
+              : currentItem.value.data.height || 0;
+          const width =
+            typeof currentItem.value.data.width === 'string'
+              ? parseFloat(currentItem.value.data.width)
+              : currentItem.value.data.width || 0;
+
+          if (startX <= x + THRESHOLD && startX >= x - THRESHOLD) {
+            if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
+              ctx.zone = 'TOP_LEFT';
+            } else if (
+              startY <= y + height + THRESHOLD &&
+              startY >= y + height - THRESHOLD
             ) {
-              currentItem.value = {
-                type: 'pen',
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                data: initialItem.value.data.map((p) => ({
-                  x: p.x + translationX,
-                  y: p.y + translationY,
-                })),
-              };
-            } else {
-              currentItem.value = {
-                type: 'pen',
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                data: currentItem.value.data.concat({
-                  x: currentX,
-                  y: currentY,
-                }),
-              };
+              ctx.zone = 'BOTTOM_LEFT';
             }
-            break;
-          case 'ellipse':
-            if (initialItem.value?.type === currentItem.value.type) {
-              const rx =
-                typeof initialItem.value.data.rx === 'string'
-                  ? parseFloat(initialItem.value?.data.rx)
-                  : initialItem.value.data.rx || 0;
-
-              const ry =
-                typeof initialItem.value.data.ry === 'string'
-                  ? parseFloat(initialItem.value.data.ry)
-                  : initialItem.value.data.ry || 0;
-
-              const cx =
-                typeof initialItem.value.data.cx === 'string'
-                  ? parseFloat(initialItem.value.data.cx)
-                  : initialItem.value.data.cx || 0;
-
-              const cy =
-                typeof initialItem.value.data.cy === 'string'
-                  ? parseFloat(initialItem.value.data.cy)
-                  : initialItem.value.data.cy || 0;
-
-              switch (zone) {
-                case 'TOP':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      cx: cx,
-                      cy: cy + translationY,
-                      rx: rx,
-                      ry: ry - translationY,
-                    },
-                  };
-                  break;
-                case 'BOTTOM':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      cx: cx,
-                      cy: cy + translationY,
-                      rx: rx,
-                      ry: ry + translationY,
-                    },
-                  };
-                  break;
-                case 'LEFT':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      cx: cx + translationX,
-                      cy: cy,
-                      rx: rx - translationX,
-                      ry: ry,
-                    },
-                  };
-                  break;
-                case 'RIGHT':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      cx: cx + translationX,
-                      cy: cy,
-                      rx: rx + translationX,
-                      ry: ry,
-                    },
-                  };
-                  break;
-                case 'CENTER':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      cx: cx + translationX,
-                      cy: cy + translationY,
-                      rx: rx,
-                      ry: ry,
-                    },
-                  };
-                  break;
-              }
-            } else {
-              currentItem.value = {
-                type: currentItem.value.type,
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                data: {
-                  cx: startX + translationX,
-                  cy: startY + translationY,
-                  rx: translationX,
-                  ry: translationY,
-                },
-              };
+          } else if (
+            startX <= x + width + THRESHOLD &&
+            startX >= x + width - THRESHOLD
+          ) {
+            if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
+              ctx.zone = 'TOP_RIGHT';
+            } else if (
+              startY <= y + height + THRESHOLD &&
+              startY >= y + height - THRESHOLD
+            ) {
+              ctx.zone = 'BOTTOM_RIGHT';
             }
+          } else if (
+            ((width > 0 && startX > x && startX < x + width) ||
+              (width < 0 && startX < x && startX > x + width)) &&
+            ((height > 0 && startY > y && startY < y + height) ||
+              (height < 0 && startY < y && startY > y + height))
+          ) {
+            ctx.zone = 'CENTER';
+          } else {
+            ctx.zone = 'OUT';
+            initialItem.value = null;
+          }
 
-            break;
-          case 'rectangle':
-            if (initialItem.value?.type === currentItem.value.type) {
-              const height =
-                typeof initialItem.value?.data.height === 'string'
-                  ? parseFloat(initialItem.value?.data.height)
-                  : initialItem.value?.data.height || 0;
+          break;
+        case 'doubleHead':
+        case 'singleHead':
+          const x1 =
+            typeof currentItem.value.data.x1 === 'string'
+              ? parseFloat(currentItem.value.data.x1)
+              : currentItem.value.data.x1 || 0;
+          const y1 =
+            typeof currentItem.value.data.y1 === 'string'
+              ? parseFloat(currentItem.value.data.y1)
+              : currentItem.value.data.y1 || 0;
+          const x2 =
+            typeof currentItem.value.data.x2 === 'string'
+              ? parseFloat(currentItem.value.data.x2)
+              : currentItem.value.data.x2 || 0;
+          const y2 =
+            typeof currentItem.value.data.y2 === 'string'
+              ? parseFloat(currentItem.value.data.y2)
+              : currentItem.value.data.y2 || 0;
 
-              const width =
-                typeof initialItem.value?.data.width === 'string'
-                  ? parseFloat(initialItem.value?.data.width)
-                  : initialItem.value?.data.width || 0;
+          if (
+            startX <= x1 + THRESHOLD &&
+            startX >= x1 - THRESHOLD &&
+            startY <= y1 + THRESHOLD &&
+            startY >= y1 - THRESHOLD
+          ) {
+            ctx.zone = 'TOP';
+          } else if (
+            startX <= x2 + THRESHOLD &&
+            startX >= x2 - THRESHOLD &&
+            startY - THRESHOLD <= y2 + THRESHOLD &&
+            startY + THRESHOLD >= y2 - THRESHOLD
+          ) {
+            ctx.zone = 'BOTTOM';
+          } else if (
+            pDistance({ x: startX, y: startY }, { x1, x2, y1, y2 }) <=
+              THRESHOLD &&
+            ((startX > x1 && startX < x2) || (startX < x1 && startX > x2)) &&
+            ((startY > y1 && startY < y2) || (startY < y1 && startY > y2))
+          ) {
+            ctx.zone = 'CENTER';
+          } else {
+            ctx.zone = 'OUT';
+            initialItem.value = null;
+          }
 
-              const x =
-                typeof initialItem.value?.data.x === 'string'
-                  ? parseFloat(initialItem.value?.data.x)
-                  : initialItem.value?.data.x || 0;
+          break;
+        case 'text':
+          const xText =
+            typeof currentItem.value.data.x === 'string'
+              ? parseFloat(currentItem.value.data.x)
+              : currentItem.value.data.x || 0;
+          const yText =
+            typeof currentItem.value.data.y === 'string'
+              ? parseFloat(currentItem.value.data.y)
+              : currentItem.value.data.y || 0;
+          const widthText =
+            typeof currentItem.value.data.width === 'string'
+              ? parseFloat(currentItem.value.data.width)
+              : currentItem.value.data.width || 0;
+          const heightText =
+            typeof currentItem.value.data.height === 'string'
+              ? parseFloat(currentItem.value.data.height)
+              : currentItem.value.data.height || 0;
 
-              const y =
-                typeof initialItem.value?.data.y === 'string'
-                  ? parseFloat(initialItem.value?.data.y)
-                  : initialItem.value?.data.y || 0;
+          if (
+            startX <= xText + THRESHOLD &&
+            startX >= xText - THRESHOLD &&
+            startY <= yText + heightText / 2 + THRESHOLD &&
+            startY >= yText + heightText / 2 - THRESHOLD
+          ) {
+            ctx.zone = 'LEFT';
+          } else if (
+            startX <= xText + widthText + THRESHOLD &&
+            startX >= xText + widthText - THRESHOLD &&
+            startY <= yText + heightText / 2 + THRESHOLD &&
+            startY >= yText + heightText / 2 - THRESHOLD
+          ) {
+            ctx.zone = 'RIGHT';
+          } else if (
+            ((widthText > 0 && startX > xText && startX < xText + widthText) ||
+              (widthText < 0 &&
+                startX < xText &&
+                startX > xText + widthText)) &&
+            ((heightText > 0 &&
+              startY > yText &&
+              startY < yText + heightText) ||
+              (heightText < 0 && startY < yText && startY > yText + heightText))
+          ) {
+            ctx.zone = 'CENTER';
+          } else {
+            ctx.zone = 'OUT';
+            initialItem.value = null;
+          }
 
-              switch (zone) {
-                case 'TOP_LEFT':
-                  currentItem.value = {
-                    type: 'rectangle',
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x: startX + translationX,
-                      y: startY + translationY,
-                      width: width - translationX,
-                      height: height - translationY,
-                    },
-                  };
-                  break;
-                case 'TOP_RIGHT':
-                  currentItem.value = {
-                    type: 'rectangle',
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x: x,
-                      y: startY + translationY,
-                      width: width + translationX,
-                      height: height - translationY,
-                    },
-                  };
-                  break;
-                case 'BOTTOM_LEFT':
-                  currentItem.value = {
-                    type: 'rectangle',
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x: startX + translationX,
-                      y: y,
-                      width: width - translationX,
-                      height: height + translationY,
-                    },
-                  };
-                  break;
-                case 'BOTTOM_RIGHT':
-                  currentItem.value = {
-                    type: 'rectangle',
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x: x,
-                      y: y,
-                      width: width + translationX,
-                      height: height + translationY,
-                    },
-                  };
-                  break;
-                case 'CENTER':
-                  currentItem.value = {
-                    type: 'rectangle',
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x: x + translationX,
-                      y: y + translationY,
-                      width: width,
-                      height: height,
-                    },
-                  };
-                  break;
-              }
-            } else {
-              currentItem.value = {
-                type: 'rectangle',
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                data: {
-                  x: currentItem.value.data.x,
-                  y: currentItem.value.data.y,
-                  width: translationX,
-                  height: translationY,
-                },
-              };
-            }
-            break;
-          case 'singleHead':
-          case 'doubleHead':
-            if (initialItem.value?.type === currentItem.value.type) {
-              const x1 =
-                typeof initialItem.value?.data.x1 === 'string'
-                  ? parseFloat(initialItem.value?.data.x1)
-                  : initialItem.value?.data.x1 || 0;
-
-              const y1 =
-                typeof initialItem.value?.data.y1 === 'string'
-                  ? parseFloat(initialItem.value?.data.y1)
-                  : initialItem.value?.data.y1 || 0;
-
-              const x2 =
-                typeof initialItem.value?.data.x2 === 'string'
-                  ? parseFloat(initialItem.value?.data.x2)
-                  : initialItem.value?.data.x2 || 0;
-
-              const y2 =
-                typeof initialItem.value?.data.y2 === 'string'
-                  ? parseFloat(initialItem.value?.data.y2)
-                  : initialItem.value?.data.y2 || 0;
-
-              switch (zone) {
-                case 'TOP':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x1: x1 + translationX,
-                      y1: y1 + translationY,
-                      x2: x2,
-                      y2: y2,
-                    },
-                  };
-                  break;
-                case 'BOTTOM':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x1: x1,
-                      y1: y1,
-                      x2: x2 + translationX,
-                      y2: y2 + translationY,
-                    },
-                  };
-                  break;
-                case 'CENTER':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    data: {
-                      x1: x1 + translationX,
-                      y1: y1 + translationY,
-                      x2: x2 + translationX,
-                      y2: y2 + translationY,
-                    },
-                  };
-                  break;
-              }
-            } else {
-              currentItem.value = {
-                type: currentItem.value.type,
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                data: {
-                  x1: startX,
-                  y1: startY,
-                  x2: startX + translationX,
-                  y2: startY + translationY,
-                },
-              };
-            }
-            break;
-          case 'text':
-            if (initialItem.value?.type === currentItem.value.type) {
-              const xText =
-                typeof initialItem.value?.data.x === 'string'
-                  ? parseFloat(initialItem.value?.data.x)
-                  : initialItem.value?.data.x || 0;
-              const yText =
-                typeof initialItem.value?.data.y === 'string'
-                  ? parseFloat(initialItem.value?.data.y)
-                  : initialItem.value?.data.y || 0;
-              const widthText =
-                typeof initialItem.value?.data.width === 'string'
-                  ? parseFloat(initialItem.value?.data.width)
-                  : initialItem.value?.data.width || 0;
-              const heightText =
-                typeof initialItem.value?.data.height === 'string'
-                  ? parseFloat(initialItem.value?.data.height)
-                  : initialItem.value?.data.height || 0;
-
-              switch (zone) {
-                case 'LEFT':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    text: currentItem.value.text,
-                    data: {
-                      x: xText + translationX,
-                      y: yText,
-                      width: widthText - translationX,
-                      height: heightText,
-                    },
-                  };
-                  break;
-                case 'RIGHT':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    text: currentItem.value.text,
-                    data: {
-                      x: xText,
-                      y: yText,
-                      width: widthText + translationX,
-                      height: heightText,
-                    },
-                  };
-                  break;
-                case 'CENTER':
-                  currentItem.value = {
-                    type: currentItem.value.type,
-                    strokeWidth: currentItem.value.strokeWidth,
-                    color: currentItem.value.color,
-                    text: currentItem.value.text,
-                    data: {
-                      x: xText + translationX,
-                      y: yText + translationY,
-                      width: widthText,
-                      height: heightText,
-                    },
-                  };
-                  break;
-              }
-            } else {
-              currentItem.value = {
-                type: currentItem.value.type,
-                strokeWidth: currentItem.value.strokeWidth,
-                color: currentItem.value.color,
-                text: currentItem.value.text,
-                data: {
-                  x: startX + translationX,
-                  y: startY + translationY,
-                  width: currentItem.value.data.width,
-                  height: currentItem.value.data.height,
-                },
-              };
-            }
-        }
-      },
-      onEnd: (_event) => {
-        console.log('*********************** onEnd ***********************');
-        panPosition.value = withTiming(0);
-
-        if (currentItem.value?.type === 'text') {
-          runOnJS(textFocus)();
-
-          currentItem.value = {
-            type: currentItem.value.type,
-            strokeWidth: currentItem.value.strokeWidth,
-            color: currentItem.value.color,
-            data: currentItem.value.data,
-            text:
-              currentItem.value.text !== DEFAULT_TEXT
-                ? currentItem.value.text ?? ''
-                : '',
-          };
-        }
-        runOnJS(addScreenStateWrapper)(currentItem.value);
-      },
+          break;
+        case 'pen':
+          if (
+            currentItem.value.data.some(
+              (p) =>
+                startX <= p.x + THRESHOLD &&
+                startX >= p.x - THRESHOLD &&
+                startY <= p.y + THRESHOLD &&
+                startY >= p.y - THRESHOLD
+            )
+          ) {
+            ctx.zone = 'CENTER';
+          } else {
+            ctx.zone = 'OUT';
+            initialItem.value = null;
+          }
+          console.log('pen');
+          console.log('pen currentItem', currentItem.value);
+          break;
+        default:
+          ctx.zone = 'OUT';
+          initialItem.value = null;
+          break;
+      }
     },
-    []
-  );
+    onActive: (
+      { x: currentX, y: currentY, translationX, translationY },
+      ctx
+    ) => {
+      console.log('*********************** onActive ***********************');
+      const { startX, startY, zone, newlyCreated } = ctx;
+      if (zone === 'OUT' && newlyCreated === false) {
+        console.log('drawNewItem in onactive event');
+        ctx.newlyCreated = true;
+        if (mode.value === 'text') {
+          runOnJS(setTextVal)('');
+        }
+        drawNewItem(
+          mode,
+          currentItem,
+          addDoneItem,
+          { x: startX, y: startY },
+          { textBaseHeight, strokeWidth, color }
+        );
 
-  const rightPaneStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: panPosition.value }],
-    };
+        itemIsSelected!.value = true;
+        //setSelectedItemWrapper && runOnJS(setSelectedItemWrapper)(true);
+        onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+      }
+      switch (currentItem.value?.type) {
+        case 'pen':
+          if (
+            initialItem.value?.type === currentItem.value.type &&
+            zone === 'CENTER'
+          ) {
+            currentItem.value = {
+              type: 'pen',
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              data: initialItem.value.data.map((p) => ({
+                x: p.x + translationX,
+                y: p.y + translationY,
+              })),
+            };
+          } else {
+            currentItem.value = {
+              type: 'pen',
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              data: currentItem.value.data.concat({
+                x: currentX,
+                y: currentY,
+              }),
+            };
+          }
+          break;
+        case 'ellipse':
+          if (initialItem.value?.type === currentItem.value.type) {
+            const rx =
+              typeof initialItem.value.data.rx === 'string'
+                ? parseFloat(initialItem.value?.data.rx)
+                : initialItem.value.data.rx || 0;
+
+            const ry =
+              typeof initialItem.value.data.ry === 'string'
+                ? parseFloat(initialItem.value.data.ry)
+                : initialItem.value.data.ry || 0;
+
+            const cx =
+              typeof initialItem.value.data.cx === 'string'
+                ? parseFloat(initialItem.value.data.cx)
+                : initialItem.value.data.cx || 0;
+
+            const cy =
+              typeof initialItem.value.data.cy === 'string'
+                ? parseFloat(initialItem.value.data.cy)
+                : initialItem.value.data.cy || 0;
+
+            switch (zone) {
+              case 'TOP':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    cx: cx,
+                    cy: cy + translationY,
+                    rx: rx,
+                    ry: ry - translationY,
+                  },
+                };
+                break;
+              case 'BOTTOM':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    cx: cx,
+                    cy: cy + translationY,
+                    rx: rx,
+                    ry: ry + translationY,
+                  },
+                };
+                break;
+              case 'LEFT':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    cx: cx + translationX,
+                    cy: cy,
+                    rx: rx - translationX,
+                    ry: ry,
+                  },
+                };
+                break;
+              case 'RIGHT':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    cx: cx + translationX,
+                    cy: cy,
+                    rx: rx + translationX,
+                    ry: ry,
+                  },
+                };
+                break;
+              case 'CENTER':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    cx: cx + translationX,
+                    cy: cy + translationY,
+                    rx: rx,
+                    ry: ry,
+                  },
+                };
+                break;
+            }
+          } else {
+            currentItem.value = {
+              type: currentItem.value.type,
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              data: {
+                cx: startX + translationX,
+                cy: startY + translationY,
+                rx: translationX,
+                ry: translationY,
+              },
+            };
+          }
+
+          break;
+        case 'rectangle':
+          if (initialItem.value?.type === currentItem.value.type) {
+            const height =
+              typeof initialItem.value?.data.height === 'string'
+                ? parseFloat(initialItem.value?.data.height)
+                : initialItem.value?.data.height || 0;
+
+            const width =
+              typeof initialItem.value?.data.width === 'string'
+                ? parseFloat(initialItem.value?.data.width)
+                : initialItem.value?.data.width || 0;
+
+            const x =
+              typeof initialItem.value?.data.x === 'string'
+                ? parseFloat(initialItem.value?.data.x)
+                : initialItem.value?.data.x || 0;
+
+            const y =
+              typeof initialItem.value?.data.y === 'string'
+                ? parseFloat(initialItem.value?.data.y)
+                : initialItem.value?.data.y || 0;
+
+            switch (zone) {
+              case 'TOP_LEFT':
+                currentItem.value = {
+                  type: 'rectangle',
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x: startX + translationX,
+                    y: startY + translationY,
+                    width: width - translationX,
+                    height: height - translationY,
+                  },
+                };
+                break;
+              case 'TOP_RIGHT':
+                currentItem.value = {
+                  type: 'rectangle',
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x: x,
+                    y: startY + translationY,
+                    width: width + translationX,
+                    height: height - translationY,
+                  },
+                };
+                break;
+              case 'BOTTOM_LEFT':
+                currentItem.value = {
+                  type: 'rectangle',
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x: startX + translationX,
+                    y: y,
+                    width: width - translationX,
+                    height: height + translationY,
+                  },
+                };
+                break;
+              case 'BOTTOM_RIGHT':
+                currentItem.value = {
+                  type: 'rectangle',
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x: x,
+                    y: y,
+                    width: width + translationX,
+                    height: height + translationY,
+                  },
+                };
+                break;
+              case 'CENTER':
+                currentItem.value = {
+                  type: 'rectangle',
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x: x + translationX,
+                    y: y + translationY,
+                    width: width,
+                    height: height,
+                  },
+                };
+                break;
+            }
+          } else {
+            currentItem.value = {
+              type: 'rectangle',
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              data: {
+                x: currentItem.value.data.x,
+                y: currentItem.value.data.y,
+                width: translationX,
+                height: translationY,
+              },
+            };
+          }
+          break;
+        case 'singleHead':
+        case 'doubleHead':
+          if (initialItem.value?.type === currentItem.value.type) {
+            const x1 =
+              typeof initialItem.value?.data.x1 === 'string'
+                ? parseFloat(initialItem.value?.data.x1)
+                : initialItem.value?.data.x1 || 0;
+
+            const y1 =
+              typeof initialItem.value?.data.y1 === 'string'
+                ? parseFloat(initialItem.value?.data.y1)
+                : initialItem.value?.data.y1 || 0;
+
+            const x2 =
+              typeof initialItem.value?.data.x2 === 'string'
+                ? parseFloat(initialItem.value?.data.x2)
+                : initialItem.value?.data.x2 || 0;
+
+            const y2 =
+              typeof initialItem.value?.data.y2 === 'string'
+                ? parseFloat(initialItem.value?.data.y2)
+                : initialItem.value?.data.y2 || 0;
+
+            switch (zone) {
+              case 'TOP':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x1: x1 + translationX,
+                    y1: y1 + translationY,
+                    x2: x2,
+                    y2: y2,
+                  },
+                };
+                break;
+              case 'BOTTOM':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x1: x1,
+                    y1: y1,
+                    x2: x2 + translationX,
+                    y2: y2 + translationY,
+                  },
+                };
+                break;
+              case 'CENTER':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  data: {
+                    x1: x1 + translationX,
+                    y1: y1 + translationY,
+                    x2: x2 + translationX,
+                    y2: y2 + translationY,
+                  },
+                };
+                break;
+            }
+          } else {
+            currentItem.value = {
+              type: currentItem.value.type,
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              data: {
+                x1: startX,
+                y1: startY,
+                x2: startX + translationX,
+                y2: startY + translationY,
+              },
+            };
+          }
+          break;
+        case 'text':
+          if (initialItem.value?.type === currentItem.value.type) {
+            const xText =
+              typeof initialItem.value?.data.x === 'string'
+                ? parseFloat(initialItem.value?.data.x)
+                : initialItem.value?.data.x || 0;
+            const yText =
+              typeof initialItem.value?.data.y === 'string'
+                ? parseFloat(initialItem.value?.data.y)
+                : initialItem.value?.data.y || 0;
+            const widthText =
+              typeof initialItem.value?.data.width === 'string'
+                ? parseFloat(initialItem.value?.data.width)
+                : initialItem.value?.data.width || 0;
+            const heightText =
+              typeof initialItem.value?.data.height === 'string'
+                ? parseFloat(initialItem.value?.data.height)
+                : initialItem.value?.data.height || 0;
+
+            switch (zone) {
+              case 'LEFT':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  text: currentItem.value.text,
+                  data: {
+                    x: xText + translationX,
+                    y: yText,
+                    width: widthText - translationX,
+                    height: heightText,
+                  },
+                };
+                break;
+              case 'RIGHT':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  text: currentItem.value.text,
+                  data: {
+                    x: xText,
+                    y: yText,
+                    width: widthText + translationX,
+                    height: heightText,
+                  },
+                };
+                break;
+              case 'CENTER':
+                currentItem.value = {
+                  type: currentItem.value.type,
+                  strokeWidth: currentItem.value.strokeWidth,
+                  color: currentItem.value.color,
+                  text: currentItem.value.text,
+                  data: {
+                    x: xText + translationX,
+                    y: yText + translationY,
+                    width: widthText,
+                    height: heightText,
+                  },
+                };
+                break;
+            }
+          } else {
+            currentItem.value = {
+              type: currentItem.value.type,
+              strokeWidth: currentItem.value.strokeWidth,
+              color: currentItem.value.color,
+              text: currentItem.value.text,
+              data: {
+                x: startX + translationX,
+                y: startY + translationY,
+                width: currentItem.value.data.width,
+                height: currentItem.value.data.height,
+              },
+            };
+          }
+      }
+    },
+    onEnd: (_event) => {
+      console.log('*********************** onEnd ***********************');
+      //panPosition.value = withTiming(0);
+
+      if (currentItem.value?.type === 'text') {
+        runOnJS(textFocus)();
+
+        currentItem.value = {
+          type: currentItem.value.type,
+          strokeWidth: currentItem.value.strokeWidth,
+          color: currentItem.value.color,
+          data: currentItem.value.data,
+          text:
+            currentItem.value.text !== DEFAULT_TEXT
+              ? currentItem.value.text ?? ''
+              : '',
+        };
+      }
+      runOnJS(addScreenStates)(currentItem.value);
+    },
   });
 
   useEffect(() => {
@@ -1190,7 +1115,7 @@ const DrawCore = React.forwardRef<
   const textInputContainerStyle = useAnimatedStyle(() => {
     return {
       height: 'auto',
-      backgroundColor: 'white',
+      backgroundColor: 'red',
       display: 'flex',
       opacity: showTextInput.value ? withTiming(1) : withTiming(0),
     };
@@ -1198,6 +1123,7 @@ const DrawCore = React.forwardRef<
 
   const textInputStyle = useAnimatedStyle(() => {
     return {
+      backgroundColor: 'blue',
       display: showTextInput.value ? 'flex' : 'none',
       opacity: showTextInput.value ? withTiming(1) : withTiming(0),
     };
@@ -1278,12 +1204,14 @@ const DrawCore = React.forwardRef<
       console.log(
         '************************ onPressItem *************************'
       );
-      itemIsSelected!.value = true;
+
+      console.log('index', index);
+      itemIsSelected.value = true;
 
       const previousItem = currentItem.value;
 
       strokeWidth.value = item.strokeWidth;
-      color!.value = item.color;
+      color.value = item.color;
       currentItem.value = item;
 
       deleteDoneItem(index);
@@ -1362,7 +1290,7 @@ const DrawCore = React.forwardRef<
       <View
         style={[
           styles.drawZone,
-          { backgroundColor: backgroundColor ?? '#FFF' },
+          { backgroundColor: backgroundColor ?? 'none' },
         ]}
         onLayout={(event) => {
           setDrawRegion({
@@ -1416,30 +1344,29 @@ const DrawCore = React.forwardRef<
           </Animated.View>
         </PanGestureHandler>
       </View>
-
-      {/*Platform.OS === 'ios' ? (
-          <InputAccessoryView>
-            <AnimatedTextInput
-              ref={textInputRef}
-              style={[styles.textInput, textInputStyle]}
-              onEndEditing={textInputRef.current?.clear}
-              onChangeText={setTextVal}
-              value={textVal}
-              autoCorrect={false}
-            />
-          </InputAccessoryView>
-        ) : (
-          <Animated.View style={textInputContainerStyle}>
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              onEndEditing={textInputRef.current?.clear}
-              onChangeText={setTextVal}
-              value={textVal}
-              autoCorrect={false}
-            />
-          </Animated.View>
-        )*/}
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView>
+          <AnimatedTextInput
+            ref={textInputRef}
+            style={[styles.textInput, textInputStyle]}
+            onEndEditing={textInputRef.current?.clear}
+            onChangeText={setTextVal}
+            value={textVal}
+            autoCorrect={false}
+          />
+        </InputAccessoryView>
+      ) : (
+        <Animated.View style={textInputContainerStyle}>
+          <TextInput
+            ref={textInputRef}
+            style={styles.textInput}
+            onEndEditing={textInputRef.current?.clear}
+            onChangeText={setTextVal}
+            value={textVal}
+            autoCorrect={false}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 });

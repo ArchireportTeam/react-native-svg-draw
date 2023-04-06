@@ -13,7 +13,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import type { hslColor, LinearGradientType } from '../../types';
+import type { LinearGradientType } from '../../types';
 import useDrawHook from '../DrawCore/useDrawHook';
 
 const gradientColors = [

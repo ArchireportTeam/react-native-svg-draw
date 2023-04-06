@@ -21,6 +21,8 @@ import type { DrawCoreProps } from 'src/types';
 import useDrawHook from '../DrawCore/useDrawHook';
 import Sliders from '../Slider/Sliders';
 import DrawCore from '../DrawCore';
+import ThrashSvg from './ThrashSvg';
+import CancelSvg from './CancelSvg';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -75,7 +77,8 @@ export default function DrawWithOption({
   image?: ImageRequireSource | ImageURISource;
   close: () => void;
 }) {
-  const { drawingMode, setDrawingMode } = useDrawHook();
+  const { drawingMode, setDrawingMode, cancelEnabled, itemIsSelected } =
+    useDrawHook();
   //console.log('strokeWidth', strokeWidth);
   const drawRef = useRef<DrawCoreProps>(null);
   //const [t] = useTranslation();
@@ -230,29 +233,27 @@ export default function DrawWithOption({
       </View>
       <View
         style={{
-          marginHorizontal: 100,
-          borderWidth: 1,
-          borderColor: 'grey',
+          marginHorizontal: 0,
           flex: 1,
         }}
       >
-        <DrawCore ref={drawRef} image={image} backgroundColor={'white'} />
+        <DrawCore ref={drawRef} image={image} />
       </View>
 
       <Sliders linearGradient={linearGradient} />
-      {/*
+
       {showToolbar ? (
         <View style={styles.bottomToolBar}>
-          selectedItem ? (
+          {itemIsSelected ? (
             <Pressable
               style={styles.option}
               onPress={() => {
                 drawRef.current?.deleteSelectedItem();
-              }}>
+              }}
+            >
               <ThrashSvg width={28} height={28} color="white" />
             </Pressable>
-          ) : null
-            
+          ) : null}
           {cancelEnabled ? (
             <Pressable
               style={styles.option}
@@ -268,10 +269,8 @@ export default function DrawWithOption({
               />
             </Pressable>
           ) : null}
-         
         </View>
       ) : null}
-       */}
     </View>
   );
 }

@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig",
+  "compilerOptions": {
+  "ignoreDeprecations": "5.0",
+  },
   "exclude": ["example"]
 }

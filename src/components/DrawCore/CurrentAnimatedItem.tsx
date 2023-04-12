@@ -179,7 +179,7 @@ export default function CurrentAnimatedItem({
         marker: 'url(#selection)',
       };
     },
-    [currentItem.value],
+    null,
     propAdapter
   );
 
@@ -203,7 +203,7 @@ export default function CurrentAnimatedItem({
         markerEnd: 'arrowhead',
       };
     },
-    [currentItem.value],
+    null,
     propAdapter
   );
 
@@ -229,7 +229,7 @@ export default function CurrentAnimatedItem({
         markerEnd: 'side',
       };
     },
-    [currentItem.value],
+    null,
     propAdapter
   );
 
@@ -254,7 +254,7 @@ export default function CurrentAnimatedItem({
         marker: 'url(#selection)',
       };
     },
-    [currentItem.value],
+    null,
     propAdapter
   );
 
@@ -275,7 +275,7 @@ export default function CurrentAnimatedItem({
         markerEnd: 'selection',
       };
     },
-    [currentItem.value],
+    null,
     propAdapter
   );
 

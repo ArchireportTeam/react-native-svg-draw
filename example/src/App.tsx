@@ -16,6 +16,9 @@ export default gestureHandlerRootHOC(function App() {
           linearGradient={LinearGradient}
           image={require('./pexels-sebastian-palomino-2847766.jpg')}
           close={() => true}
+          takeSnapshot={(snap) => {
+            snap.then((uri) => console.log('snapShot uri:', uri));
+          }}
         />
       </DrawProvider>
     </SafeAreaView>

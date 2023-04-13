@@ -75,10 +75,12 @@ export default function DrawWithOption({
   linearGradient,
   image,
   close,
+  takeSnapshot,
 }: {
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
-  close: () => void;
+  close?: () => void;
+  takeSnapshot?: (snap: Promise<string | undefined>) => void;
 }) {
   const {
     drawingMode,
@@ -86,7 +88,7 @@ export default function DrawWithOption({
     cancelEnabled,
     itemIsSelected,
     cancelLastAction,
-    takeSnapshot,
+    takeSnapshot: takeSnapshotAction,
     deleteSelectedItem,
   } = useDrawHook();
 
@@ -115,8 +117,10 @@ export default function DrawWithOption({
   }, []);
 
   const takeSnapshotAndGetUri = useCallback(async () => {
-    console.log(await takeSnapshot());
-  }, [takeSnapshot]);
+    if (takeSnapshot) {
+      takeSnapshot(takeSnapshotAction());
+    }
+  }, [takeSnapshot, takeSnapshotAction]);
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>

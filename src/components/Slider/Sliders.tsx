@@ -25,10 +25,14 @@ const Sliders = ({
       style={{
         flexDirection: 'row',
         marginTop: 20,
-        borderColor: '#E5E5E5',
+        borderColor: 'grey',
+        //backgroundColor: '#42434E',
         borderRadius: 20,
         height: 40,
         borderWidth: 1,
+        marginHorizontal: 20,
+        maxWidth: 500,
+        alignSelf: 'center',
       }}
     >
       <View

@@ -1,5 +1,11 @@
 import { DrawContext } from './DrawContext';
-import React, { ReactElement, useMemo, useReducer, useState } from 'react';
+import React, {
+  ReactElement,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import type {
   Action,
   DrawItem,
@@ -8,22 +14,16 @@ import type {
   hslColor,
 } from '../../types';
 import { useSharedValue } from 'react-native-reanimated';
+import type ViewShot from 'react-native-view-shot';
 
 const DrawProvider = ({ children }: { children: ReactElement }) => {
-  console.log('********** DrawProvider init ***************');
-
-  /*
-  const [drawState, setDrawState] = useState<DrawState>({
-    doneItems: [],
-    screenStates: [[]],
-  });*/
-  //console.log('drawState.doneItems.length', drawState.doneItems.length);
   const itemIsSelected = useSharedValue<boolean>(false);
   const strokeWidth = useSharedValue<number>(2);
   const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
   const currentItem = useSharedValue<DrawItem | null>(null);
   const [cancelEnabled, setCancelEnabled] = useState(false);
   const [drawingMode, setDrawingMode] = useState<DrawItemType>('pen');
+  const viewShot = useRef<ViewShot>(null);
 
   const reducerDrawStates = (
     drawState: DrawState,
@@ -45,12 +45,20 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
         };
       case 'ADD_SCREEN_STATE':
         if (action.currentItem) {
-          return {
-            ...drawState,
-            screenStates: drawState.screenStates.concat([
-              [...drawState.doneItems, action.currentItem],
-            ]),
-          };
+          // hack sometime rectangle is not draw
+          if (
+            action.currentItem.type === 'rectangle' &&
+            (!action.currentItem.data.width || !action.currentItem.data.height)
+          ) {
+            return drawState;
+          } else {
+            return {
+              ...drawState,
+              screenStates: drawState.screenStates.concat([
+                [...drawState.doneItems, action.currentItem],
+              ]),
+            };
+          }
         } else {
           return {
             ...drawState,
@@ -66,7 +74,7 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
           const newScreenStates = drawState.screenStates;
           newScreenStates.pop();
           if (newScreenStates.length === 1) {
-            action.onCancelChange?.(false);
+            setCancelEnabled(false);
           }
           return {
             doneItems: drawState.screenStates[len - 2] ?? [],
@@ -88,12 +96,9 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
     initialState
   );
 
-  //const strokeWidth = useSharedValue<number>(2);
-  //const strokeWidth = useSharedValue<number>(2);
   const contextValue = useMemo(
     () => ({
       drawState,
-      //setDrawState,
       dispatchDrawStates,
       strokeWidth,
       color,
@@ -103,10 +108,10 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       itemIsSelected,
       cancelEnabled,
       setCancelEnabled,
+      viewShot,
     }),
     [
       drawState,
-      //setDrawState,
       dispatchDrawStates,
       strokeWidth,
       color,
@@ -116,6 +121,7 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       itemIsSelected,
       cancelEnabled,
       setCancelEnabled,
+      viewShot,
     ]
   );
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   View,
@@ -7,7 +7,6 @@ import {
   ImageRequireSource,
   ImageURISource,
   Keyboard,
-  Text,
 } from 'react-native';
 import DoubleHeadSvg from './DoubleHeadSvg';
 import CircleSvg from './CircleSvg';
@@ -16,26 +15,34 @@ import ArrowSvg from './ArrowSvg';
 import TextSvg from './TextSvg';
 import CloseSvg from './CloseSvg';
 import PenSvg from './PenSvg';
-
-import type { DrawCoreProps } from 'src/types';
 import useDrawHook from '../DrawCore/useDrawHook';
 import Sliders from '../Slider/Sliders';
 import DrawCore from '../DrawCore';
 import ThrashSvg from './ThrashSvg';
 import CancelSvg from './CancelSvg';
+import SendSvg from './SendSvg';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  actionButton: {
+    backgroundColor: 'grey',
+    padding: 10,
+    justifyContent: 'center',
+    alignContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    borderRadius: 20,
+    width: 40,
+  },
   option: {
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   toolbar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 30,
     paddingTop: 15,
@@ -43,8 +50,7 @@ const styles = StyleSheet.create({
   },
   drawOptions: {
     flex: 1,
-    alignItems: 'center',
-    alignContent: 'center',
+    paddingHorizontal: 10,
   },
   sendButton: {
     backgroundColor: '#3a6cff',
@@ -62,39 +68,27 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     paddingTop: 30,
     paddingHorizontal: 20,
-    backgroundColor: 'red',
   },
 });
 
 export default function DrawWithOption({
-  takeSnapshot,
   linearGradient,
   image,
   close,
 }: {
-  takeSnapshot?: (snap: Promise<string | undefined>) => void;
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
   close: () => void;
 }) {
-  const { drawingMode, setDrawingMode, cancelEnabled, itemIsSelected } =
-    useDrawHook();
-  //console.log('strokeWidth', strokeWidth);
-  const drawRef = useRef<DrawCoreProps>(null);
-  //const [t] = useTranslation();
-
-  //const [drawingMode, setDrawingMode] = useState<DrawItemType>(defaultDrawingMode);
-
-  //const [selectedItem, setSelectedItem] = useState(false);
-
-  //const [cancelEnabled, setCancelEnabled] = useState(false);
-
-  //const theme = useTheme<Theme>();
-  const onPressSend = useCallback(() => {
-    if (drawRef.current) {
-      takeSnapshot?.(drawRef.current.takeSnapshot());
-    }
-  }, [takeSnapshot]);
+  const {
+    drawingMode,
+    setDrawingMode,
+    cancelEnabled,
+    itemIsSelected,
+    cancelLastAction,
+    takeSnapshot,
+    deleteSelectedItem,
+  } = useDrawHook();
 
   const [showToolbar, setShowToolbar] = useState(true);
 
@@ -120,15 +114,17 @@ export default function DrawWithOption({
     };
   }, []);
 
+  const takeSnapshotAndGetUri = useCallback(async () => {
+    console.log(await takeSnapshot());
+  }, [takeSnapshot]);
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
-        <View>
+        <View style={styles.actionButton}>
           <Pressable onPress={close}>
             <CloseSvg height={20} width={20} fill="#ffffff" />
           </Pressable>
         </View>
-
         <View style={styles.drawOptions}>
           <View
             style={{
@@ -225,9 +221,9 @@ export default function DrawWithOption({
           </View>
         </View>
 
-        <View style={{ paddingHorizontal: 50, height: 40 }}>
-          <Pressable onPress={onPressSend}>
-            <Text>inserer</Text>
+        <View style={styles.actionButton}>
+          <Pressable onPress={takeSnapshotAndGetUri}>
+            <SendSvg height={20} width={20} fill="#ffffff" />
           </Pressable>
         </View>
       </View>
@@ -237,40 +233,45 @@ export default function DrawWithOption({
           flex: 1,
         }}
       >
-        <DrawCore ref={drawRef} image={image} />
+        <DrawCore image={image} />
       </View>
 
       <Sliders linearGradient={linearGradient} />
 
-      {showToolbar ? (
-        <View style={styles.bottomToolBar}>
-          {itemIsSelected ? (
-            <Pressable
-              style={styles.option}
-              onPress={() => {
-                drawRef.current?.deleteSelectedItem();
-              }}
-            >
-              <ThrashSvg width={28} height={28} color="white" />
-            </Pressable>
-          ) : null}
-          {cancelEnabled ? (
-            <Pressable
-              style={styles.option}
-              onPress={() => {
-                drawRef.current?.cancelLastAction();
-              }}
-            >
-              <CancelSvg
-                width={27}
-                height={27}
-                color={'grey'}
-                strokeWidth={2}
-              />
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
+      <View style={{ height: 70 }}>
+        {showToolbar ? (
+          <View style={styles.bottomToolBar}>
+            {itemIsSelected.value ? (
+              <View style={{ ...styles.actionButton, marginRight: 10 }}>
+                <Pressable style={styles.option} onPress={deleteSelectedItem}>
+                  <ThrashSvg
+                    width={28}
+                    height={28}
+                    color="white"
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
+            {cancelEnabled ? (
+              <View
+                style={{
+                  ...styles.actionButton,
+                }}
+              >
+                <Pressable style={styles.option} onPress={cancelLastAction}>
+                  <CancelSvg
+                    width={28}
+                    height={28}
+                    color={'grey'}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }

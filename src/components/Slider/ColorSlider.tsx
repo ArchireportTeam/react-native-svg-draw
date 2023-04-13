@@ -113,13 +113,6 @@ const ColorSlider = ({
     };
   }, [position.value]);
 
-  /*
-  const selectedColorStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: color.value,
-    };
-  }, [color.value]);
-*/
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {
       sliderWidth.value = event.nativeEvent.layout.width;

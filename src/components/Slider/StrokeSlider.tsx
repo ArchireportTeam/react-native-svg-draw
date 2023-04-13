@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -13,6 +13,7 @@ import Animated, {
 import { View } from 'react-native';
 import { sliderStyle, TRACK_R } from './sliderStyle';
 import useDrawHook from '../DrawCore/useDrawHook';
+import SliderSvg from '../DrawWithOptions/SliderSvg';
 //import Rectangle from '../DrawWithOptions/rectangle.svg';
 
 const StrokeSlider = ({
@@ -26,10 +27,7 @@ const StrokeSlider = ({
 
   const sliderWidth = useSharedValue(0);
 
-  const [text, setText] = useState(strokeWidth!.value);
-
   const position = useDerivedValue(() => {
-    runOnJS(setText)(Math.round(strokeWidth!.value));
     return (
       (sliderWidth.value / (maxValue - minValue)) *
       (strokeWidth!.value - minValue)
@@ -74,17 +72,19 @@ const StrokeSlider = ({
     <View style={sliderStyle.container}>
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View style={sliderStyle.container}>
-          {/*
-                  <Rectangle width={"100%"} height={"100%"} color={"#E5E5E5"} />
-          */}
           <View
             onLayout={(event) => {
               sliderWidth.value = event.nativeEvent.layout.width;
             }}
-            style={{
-              width: '100%',
-            }}
-          />
+          >
+            <SliderSvg
+              color="grey"
+              width={150}
+              style={{
+                marginTop: 5,
+              }}
+            />
+          </View>
           <Animated.View style={[sliderStyle.thumb, style]} />
         </Animated.View>
       </PanGestureHandler>

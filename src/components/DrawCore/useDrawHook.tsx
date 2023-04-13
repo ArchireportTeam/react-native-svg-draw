@@ -5,7 +5,6 @@ const useDrawHook = () => {
   const {
     drawState,
     dispatchDrawStates,
-    //setDrawState,
     strokeWidth,
     color,
     currentItem,
@@ -14,75 +13,41 @@ const useDrawHook = () => {
     itemIsSelected,
     cancelEnabled,
     setCancelEnabled,
+    viewShot,
   } = useContext(DrawContext);
 
-  /*
-  const addDoneItem = useCallback(
-    (item: DrawItem) => {
-      'worklet';
-      console.log('******************** addDoneItem *********************');
-      setDrawState((previousDrawState) => ({
-        ...previousDrawState,
-        doneItems: drawState.doneItems.concat(item),
-      }));
-    },
-    [drawState, setDrawState]
-  );
+  const takeSnapshot = useCallback(async () => {
+    if (currentItem?.value) {
+      dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: currentItem.value });
+      currentItem.value = null;
+    }
+    return viewShot!.current?.capture?.();
+  }, [currentItem, dispatchDrawStates, viewShot]);
 
-  const deleteDoneItem = useCallback(
-    (indice: number) => {
-      'worklet';
-      console.log('******************** deleteDoneItem *********************');
-      setDrawState((previousDrawState) => ({
-        ...previousDrawState,
-        doneItems: previousDrawState.doneItems.splice(indice, 1),
-      }));
-    },
-    [setDrawState]
-  );
-
-  const addScreenState = useCallback(
-    (item: DrawItem | null) => {
-      'worklet';
-      console.log('******************** addScreenState *********************');
-      setDrawState((previousDrawState) => ({
-        ...previousDrawState,
-        screenStates: previousDrawState.screenStates.concat([
-          item !== null
-            ? [...previousDrawState.doneItems, item]
-            : [...previousDrawState.doneItems],
-        ]),
-      }));
-    },
-    [setDrawState]
-  );
-
-  
-
-  const cancelAction = useCallback(() => {
-    'worklet';
-    console.log('******************** cancelAction *********************');
-
-    setDrawState((previousDrawState) => {
-      const newScreenStates = previousDrawState.screenStates;
-      const len = newScreenStates.length;
-      if (len > 1) {
-        newScreenStates.pop();
-        return {
-          doneItems: previousDrawState.screenStates[len - 2] ?? [],
-          screenStates: newScreenStates,
-        };
-      } else {
-        return previousDrawState;
-      }
+  const cancelLastAction = useCallback(() => {
+    itemIsSelected!.value = false;
+    if (currentItem?.value) {
+      currentItem.value = null;
+    }
+    dispatchDrawStates({
+      type: 'CANCEL',
     });
-  }, [setDrawState]);
-*/
+  }, [currentItem, dispatchDrawStates, itemIsSelected]);
+
+  const deleteSelectedItem = useCallback(() => {
+    if (currentItem?.value) {
+      currentItem.value = null;
+      dispatchDrawStates({
+        type: 'ADD_SCREEN_STATE',
+        currentItem: currentItem.value,
+      });
+    }
+    itemIsSelected!.value = false;
+    setCancelEnabled(true);
+  }, [currentItem, dispatchDrawStates, itemIsSelected, setCancelEnabled]);
+
   const onColorStrokeChange = useCallback(() => {
     'worklet';
-    console.log(
-      '******************** onColorStrokeChange *********************'
-    );
     if (currentItem?.value) {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',
@@ -97,17 +62,16 @@ const useDrawHook = () => {
     currentItem: currentItem!,
     strokeWidth: strokeWidth!,
     color: color!,
-    /*
-    addDoneItem,
-    deleteDoneItem,
-    addScreenState,
-    cancelAction,*/
     onColorStrokeChange,
     drawingMode,
     setDrawingMode,
     itemIsSelected: itemIsSelected!,
     cancelEnabled,
     setCancelEnabled,
+    cancelLastAction,
+    takeSnapshot: takeSnapshot!,
+    viewShot: viewShot!,
+    deleteSelectedItem,
   };
 };
 

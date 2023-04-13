@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-  useMemo,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -21,7 +14,6 @@ import {
 import Animated, {
   runOnJS,
   useAnimatedGestureHandler,
-  useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -32,13 +24,7 @@ import {
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
 
-import type {
-  DrawItem,
-  DrawItemType,
-  DrawCoreProps,
-  hslColor,
-  Size,
-} from '../../types';
+import type { DrawItem, DrawItemType, hslColor, Size } from '../../types';
 import DrawPad from './DrawPad';
 import ViewShot from 'react-native-view-shot';
 import useDrawHook from './useDrawHook';
@@ -55,7 +41,7 @@ const styles = StyleSheet.create({
 
   bgImage: { width: '100%', height: '100%' },
   textInput: {
-    backgroundColor: '#000000c5',
+    backgroundColor: '#262626',
     paddingVertical: 16,
     paddingHorizontal: 24,
     fontSize: 16,
@@ -138,8 +124,6 @@ const drawNewItem = (
   }
 ) => {
   'worklet';
-  console.log('********************* drawNewItem *********************');
-  console.log('currentItem.value', currentItem.value);
   if (currentItem.value) {
     runOnJS(addDoneItem)(currentItem.value);
   }
@@ -227,28 +211,23 @@ const onTextHeightUpdate = (
   }
 };
 
-const DrawCore = React.forwardRef<
-  DrawCoreProps,
-  {
-    image?: ImageRequireSource | ImageURISource;
-    backgroundColor?: string;
-  }
->(({ image, backgroundColor }, ref) => {
+const DrawCore = ({
+  image,
+  backgroundColor,
+}: {
+  image?: ImageRequireSource | ImageURISource;
+  backgroundColor?: string;
+}) => {
   const {
     drawState,
     dispatchDrawStates,
     strokeWidth,
     color,
-    /*
-    addDoneItem,
-    deleteDoneItem,
-    addScreenState,
-    cancelAction,
-    */
     currentItem,
     drawingMode,
     itemIsSelected,
     setCancelEnabled,
+    viewShot,
   } = useDrawHook();
 
   const onCancelChangeWrapper = (arg: boolean) => {
@@ -265,20 +244,10 @@ const DrawCore = React.forwardRef<
 
   const drawContainer = useRef<View>(null);
 
-  const viewShot = useRef<ViewShot>(null);
-
   const [textVal, setTextVal] = useState<string>('');
-
-  //const currentItem = useSharedValue<DrawItem | null>(null);
 
   const initialItem = useSharedValue<DrawItem | null>(null);
 
-  /*
-    const [drawStates, dispatchDrawStates] = useReducer(
-      reducerDrawStates,
-      initialState
-    );
-*/
   const textBaseHeight = useSharedValue<number | null>(null);
 
   const addDoneItem = useCallback(
@@ -305,58 +274,7 @@ const DrawCore = React.forwardRef<
     [dispatchDrawStates]
   );
 
-  const cancelAction = useCallback(() => {
-    dispatchDrawStates({
-      type: 'CANCEL',
-      onCancelChange: setCancelEnabled,
-    });
-  }, [dispatchDrawStates, setCancelEnabled]);
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      drawingContainer: drawContainer,
-      deleteSelectedItem: () => {
-        if (currentItem.value) {
-          currentItem.value = null;
-          addScreenStates(null);
-        }
-        itemIsSelected!.value = false;
-        setCancelEnabled?.(true);
-      },
-      cancelLastAction: () => {
-        itemIsSelected!.value = false;
-        if (currentItem.value) {
-          currentItem.value = null;
-        }
-        cancelAction();
-      },
-      takeSnapshot: async (): Promise<string | undefined> => {
-        if (currentItem.value) {
-          addDoneItem(currentItem.value);
-          currentItem.value = null;
-        }
-        return viewShot.current?.capture?.();
-      },
-    }),
-    [
-      currentItem,
-      itemIsSelected,
-      setCancelEnabled,
-      addScreenStates,
-      cancelAction,
-      addDoneItem,
-    ]
-  );
-  console.log(
-    '*****************************************************************************************'
-  );
-  console.log(drawingMode, mode.value, currentItem.value, itemIsSelected.value);
-
   useEffect(() => {
-    console.log('********* useEffect *********');
-    console.log('currentItem', currentItem.value);
-
     mode.value = drawingMode;
     if (currentItem.value) {
       addDoneItem(currentItem.value);
@@ -364,32 +282,6 @@ const DrawCore = React.forwardRef<
     currentItem.value = null;
     itemIsSelected.value = false;
   }, [drawingMode, mode, currentItem, addDoneItem, itemIsSelected]);
-
-  /*
-    const strokeWidth = useSharedValue<number>(2);
-    const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
-
-    
-    const styleStrokeColor = useAnimatedStyle(() => {
-      return {
-        borderWidth: strokeWidth.value,
-        borderColor: color.value
-      };
-    }, [strokeWidth,color]);
-
-        const onColorStrokeChange = useCallback(() => {
-      if (currentItem.value) {
-        addScreenStates(currentItem.value);
-      }
-    }, [addScreenStates, currentItem.value]);
-  */
-  /*
-  const addScreenStateWrapper = (item: DrawItem | null) => {
-    console.log('addScreenStateWrapper item:', item);
-    addScreenState(item);
-  };
-*/
-  //const panPosition = useSharedValue(0);
 
   const showTextInput = useSharedValue(false);
 
@@ -658,7 +550,6 @@ const DrawCore = React.forwardRef<
       { x: currentX, y: currentY, translationX, translationY },
       ctx
     ) => {
-      console.log('*********************** onActive ***********************');
       const { startX, startY, zone, newlyCreated } = ctx;
       if (zone === 'OUT' && newlyCreated === false) {
         console.log('drawNewItem in onactive event');
@@ -675,7 +566,6 @@ const DrawCore = React.forwardRef<
         );
 
         itemIsSelected!.value = true;
-        //setSelectedItemWrapper && runOnJS(setSelectedItemWrapper)(true);
         onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
       }
       switch (currentItem.value?.type) {
@@ -1070,9 +960,6 @@ const DrawCore = React.forwardRef<
       }
     },
     onEnd: (_event) => {
-      console.log('*********************** onEnd ***********************');
-      //panPosition.value = withTiming(0);
-
       if (currentItem.value?.type === 'text') {
         runOnJS(textFocus)();
 
@@ -1201,11 +1088,6 @@ const DrawCore = React.forwardRef<
 
   const onPressItem = useCallback(
     (item: DrawItem, index: number) => () => {
-      console.log(
-        '************************ onPressItem *************************'
-      );
-
-      console.log('index', index);
       itemIsSelected.value = true;
 
       const previousItem = currentItem.value;
@@ -1369,6 +1251,6 @@ const DrawCore = React.forwardRef<
       )}
     </View>
   );
-});
+};
 
 export default DrawCore;

@@ -26,7 +26,6 @@ const Sliders = ({
         flexDirection: 'row',
         marginTop: 20,
         borderColor: 'grey',
-        //backgroundColor: '#42434E',
         borderRadius: 20,
         height: 40,
         borderWidth: 1,
@@ -39,7 +38,7 @@ const Sliders = ({
         style={{
           flex: 1,
           height: 40,
-          marginHorizontal: 40,
+          marginHorizontal: 20,
           justifyContent: 'center',
         }}
       >
@@ -67,7 +66,7 @@ const Sliders = ({
         style={{
           flex: 1,
           height: 40,
-          marginHorizontal: 40,
+          marginHorizontal: 20,
           justifyContent: 'center',
         }}
       >

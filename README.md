@@ -50,7 +50,7 @@ import LinearGradient from 'react-native-linear-gradient';
 
 // ...
 <DrawProvider>
-  <DrawWithOptions linearGradient={LinearGradient} />;
+  <DrawWithOptions linearGradient={LinearGradient} />
 </DrawProvider>;
 ```
 

@@ -1,8 +1,8 @@
 import { StyleSheet } from 'react-native';
-export const TRACK_R = 8;
+export const TRACK_R = 10;
 export const sliderStyle = StyleSheet.create({
   container: {
-    height: 16,
+    height: 40,
     alignItems: 'center',
     width: '100%',
   },
@@ -16,12 +16,13 @@ export const sliderStyle = StyleSheet.create({
     zIndex: 1000,
     borderWidth: 1,
     borderColor: '#E5E5E5',
+    marginTop: 9,
   },
   track: {
     width: '100%',
     backgroundColor: 'grey',
     height: 6,
-    marginTop: 5,
+    marginTop: 15,
     borderRadius: 3,
   },
 });

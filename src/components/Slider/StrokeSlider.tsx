@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -10,11 +10,10 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { View } from 'react-native';
+import { LayoutChangeEvent, View } from 'react-native';
 import { sliderStyle, TRACK_R } from './sliderStyle';
 import useDrawHook from '../DrawCore/useDrawHook';
 import SliderSvg from '../DrawWithOptions/SliderSvg';
-//import Rectangle from '../DrawWithOptions/rectangle.svg';
 
 const StrokeSlider = ({
   minValue,
@@ -76,13 +75,16 @@ const StrokeSlider = ({
             onLayout={(event) => {
               sliderWidth.value = event.nativeEvent.layout.width;
             }}
+            style={{
+              height: 38,
+              width: '100%',
+              justifyContent: 'center',
+            }}
           >
             <SliderSvg
               color="grey"
-              width={150}
-              style={{
-                marginTop: 5,
-              }}
+              preserveAspectRatio="none"
+              style={{ maxHeight: 15 }}
             />
           </View>
           <Animated.View style={[sliderStyle.thumb, style]} />

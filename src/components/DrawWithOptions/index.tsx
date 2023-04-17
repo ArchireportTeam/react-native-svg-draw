@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
     width: 40,
   },
   option: {
-    width: 30,
-    height: 30,
+    width: 22,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 8,
@@ -137,7 +137,7 @@ export default function DrawWithOption({
               borderWidth: 1,
               borderColor: 'grey',
               borderRadius: 25,
-              height: 50,
+              height: 40,
               paddingHorizontal: 10,
               paddingVertical: 10,
             }}

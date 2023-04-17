@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -10,7 +10,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
-import { LayoutChangeEvent, View } from 'react-native';
+import { View } from 'react-native';
 import { sliderStyle, TRACK_R } from './sliderStyle';
 import useDrawHook from '../DrawCore/useDrawHook';
 import SliderSvg from '../DrawWithOptions/SliderSvg';

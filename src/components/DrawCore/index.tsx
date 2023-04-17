@@ -306,7 +306,6 @@ const DrawCore = ({
     Context
   >({
     onStart: ({ x: startX, y: startY }, ctx) => {
-      console.log('*********************** onStart ***********************');
       ctx.startX = startX;
       ctx.startY = startY;
       ctx.newlyCreated = false;
@@ -314,7 +313,6 @@ const DrawCore = ({
       //panPosition.value = withTiming(RIGHT_PANE_WIDTH);
 
       initialItem.value = currentItem.value;
-      console.log('currentItem.value', currentItem.value);
       switch (currentItem.value?.type) {
         case 'ellipse':
           const cx =
@@ -537,8 +535,6 @@ const DrawCore = ({
             ctx.zone = 'OUT';
             initialItem.value = null;
           }
-          console.log('pen');
-          console.log('pen currentItem', currentItem.value);
           break;
         default:
           ctx.zone = 'OUT';
@@ -552,7 +548,6 @@ const DrawCore = ({
     ) => {
       const { startX, startY, zone, newlyCreated } = ctx;
       if (zone === 'OUT' && newlyCreated === false) {
-        console.log('drawNewItem in onactive event');
         ctx.newlyCreated = true;
         if (mode.value === 'text') {
           runOnJS(setTextVal)('');

@@ -29,6 +29,7 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
+example/ios
 
 # Android/IJ
 #
@@ -36,6 +37,7 @@ project.xcworkspace
 .gradle
 local.properties
 android.iml
+example/android
 
 # Ruby / CocoaPods
 # Cocoapods

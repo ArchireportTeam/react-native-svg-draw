@@ -30,6 +30,9 @@ const gradientColors = [
   'hsl(0, 100%, 0%) 100%  ',
 ];
 
+const gradientStart = { x: 0, y: 0 };
+const gradientEnd = { x: 1, y: 0 };
+
 const ColorSlider = ({
   linearGradient: LinearGradient,
 }: {
@@ -125,8 +128,8 @@ const ColorSlider = ({
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View style={sliderStyle.container}>
           <LinearGradient
-            start={{ x: 0.0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+            start={gradientStart}
+            end={gradientEnd}
             colors={gradientColors}
             onLayout={onLayout}
             style={sliderStyle.track}

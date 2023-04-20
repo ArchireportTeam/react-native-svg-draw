@@ -224,14 +224,12 @@ const DrawCore = ({
     strokeWidth,
     color,
     currentItem,
-    drawingMode,
     itemIsSelected,
-    setCancelEnabled,
     viewShot,
   } = useDrawHook();
 
   const onCancelChangeWrapper = (arg: boolean) => {
-    setCancelEnabled(arg);
+    dispatchDrawStates({ type: 'SET_CANCEL_ENABLED', cancelEnabled: arg });
   };
 
   const mode = useSharedValue<DrawItemType>('pen');
@@ -275,13 +273,13 @@ const DrawCore = ({
   );
 
   useEffect(() => {
-    mode.value = drawingMode;
+    mode.value = drawState.drawingMode;
     if (currentItem.value) {
       addDoneItem(currentItem.value);
     }
     currentItem.value = null;
     itemIsSelected.value = false;
-  }, [drawingMode, mode, currentItem, addDoneItem, itemIsSelected]);
+  }, [drawState.drawingMode, mode, currentItem, addDoneItem, itemIsSelected]);
 
   const showTextInput = useSharedValue(false);
 

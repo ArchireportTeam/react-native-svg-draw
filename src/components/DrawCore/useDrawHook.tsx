@@ -8,11 +8,7 @@ const useDrawHook = () => {
     strokeWidth,
     color,
     currentItem,
-    drawingMode,
-    setDrawingMode,
     itemIsSelected,
-    cancelEnabled,
-    setCancelEnabled,
     viewShot,
   } = useContext(DrawContext);
 
@@ -40,11 +36,11 @@ const useDrawHook = () => {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',
         currentItem: currentItem.value,
+        cancelEnabled: true,
       });
     }
     itemIsSelected!.value = false;
-    setCancelEnabled(true);
-  }, [currentItem, dispatchDrawStates, itemIsSelected, setCancelEnabled]);
+  }, [currentItem, dispatchDrawStates, itemIsSelected]);
 
   const onColorStrokeChange = useCallback(() => {
     'worklet';
@@ -63,11 +59,7 @@ const useDrawHook = () => {
     strokeWidth: strokeWidth!,
     color: color!,
     onColorStrokeChange,
-    drawingMode,
-    setDrawingMode,
     itemIsSelected: itemIsSelected!,
-    cancelEnabled,
-    setCancelEnabled,
     cancelLastAction,
     takeSnapshot: takeSnapshot!,
     viewShot: viewShot!,

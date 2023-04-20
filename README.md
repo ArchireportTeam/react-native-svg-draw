@@ -98,9 +98,8 @@ You have to use the hook call "useDrawHook" inside your component to interact wi
 
 ```js
   const {
-    drawingMode,
-    setDrawingMode,
-    cancelEnabled,
+    drawState,
+    dispatchDrawStates,
     itemIsSelected,
     cancelLastAction,
     deleteSelectedItem,
@@ -115,10 +114,9 @@ You have to use the hook call "useDrawHook" inside your component to interact wi
 | `strokeWidth`         | shared value(number)   | Object from react-native-reanimated, get and set value => strokeWidth.value                               |
 | `color`               | shared value(hslColor) | Object from react-native-reanimated, get and set value => color.value                                     |
 | `onColorStrokeChange` | function               | Function use when changing color or strokeWidth is done to memorize action for undo                       |
-| `drawingMode`         | string                 | Get the selected drawing mode : 'singleHead','doubleHead','rectangle','ellipse','text','pen'              |
-| `setDrawingMode`      | function               | Set the selected drawing mode : 'singleHead','doubleHead','rectangle','ellipse','text','pen'              |
+| `drawState`           | object                 | Get the selected `drawingMode` : 'singleHead','doubleHead','rectangle','ellipse','text','pen', `cancelEnabled`  is true when last action can be canceled,  `doneItems` contains all previous draw items and `screenStates` helps to go back in time (cancel pops last state)            |
+| `dispatchDrawStates`  | function               | Can be used to update `drawingMode`            |
 | `itemIsSelected`      | shared value(boolean)  | Object from react-native-reanimated Indicate if an item is selected, to get value => itemIsSelected.value |
-| `cancelEnabled`       | boolean                | Indicate if you can display an undo button                                                                |
 | `cancelLastAction`    | function               | Call this function when user press your undo button                                                       |
 | `takeSnapshot`        | function               | This async function will return the uri of your drawing                                                   |
 | `deleteSelectedItem`  | function               | Call this function when you want to delete the selected item                                              |

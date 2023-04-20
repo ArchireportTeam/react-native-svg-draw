@@ -14,6 +14,18 @@ import { View } from 'react-native';
 import { sliderStyle, TRACK_R } from './sliderStyle';
 import useDrawHook from '../DrawCore/useDrawHook';
 import SliderSvg from '../DrawWithOptions/SliderSvg';
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    height: 38,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  sliderBackground: {
+    maxHeight: 15,
+  },
+});
 
 const StrokeSlider = ({
   minValue,
@@ -75,16 +87,12 @@ const StrokeSlider = ({
             onLayout={(event) => {
               sliderWidth.value = event.nativeEvent.layout.width;
             }}
-            style={{
-              height: 38,
-              width: '100%',
-              justifyContent: 'center',
-            }}
+            style={styles.container}
           >
             <SliderSvg
               color="grey"
               preserveAspectRatio="none"
-              style={{ maxHeight: 15 }}
+              style={styles.sliderBackground}
             />
           </View>
           <Animated.View style={[sliderStyle.thumb, style]} />

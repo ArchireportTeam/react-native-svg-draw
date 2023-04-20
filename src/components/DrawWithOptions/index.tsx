@@ -83,13 +83,12 @@ export default function DrawWithOption({
   takeSnapshot?: (snap: Promise<string | undefined>) => void;
 }) {
   const {
-    drawingMode,
-    setDrawingMode,
-    cancelEnabled,
     itemIsSelected,
     cancelLastAction,
     takeSnapshot: takeSnapshotAction,
     deleteSelectedItem,
+    dispatchDrawStates,
+    drawState,
   } = useDrawHook();
 
   const [showToolbar, setShowToolbar] = useState(true);
@@ -145,7 +144,10 @@ export default function DrawWithOption({
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('pen');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'pen',
+                });
               }}
             >
               <PenSvg
@@ -153,73 +155,88 @@ export default function DrawWithOption({
                 width={22}
                 stroke="#ffffff"
                 strokeWidth="2"
-                opacity={drawingMode === 'pen' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'pen' ? 1 : 0.5}
               />
             </Pressable>
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('doubleHead');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'doubleHead',
+                });
               }}
             >
               <DoubleHeadSvg
                 height={20}
                 width={20}
                 fill="#ffffff"
-                opacity={drawingMode === 'doubleHead' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'doubleHead' ? 1 : 0.5}
               />
             </Pressable>
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('singleHead');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'singleHead',
+                });
               }}
             >
               <ArrowSvg
                 height={23}
                 width={23}
                 fill="#ffffff"
-                opacity={drawingMode === 'singleHead' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'singleHead' ? 1 : 0.5}
               />
             </Pressable>
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('rectangle');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'rectangle',
+                });
               }}
             >
               <SquareSvg
                 height={27}
                 width={27}
                 fill="#ffffff"
-                opacity={drawingMode === 'rectangle' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'rectangle' ? 1 : 0.5}
               />
             </Pressable>
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('ellipse');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'ellipse',
+                });
               }}
             >
               <CircleSvg
                 fill="#ffffff"
                 height={26}
                 width={26}
-                opacity={drawingMode === 'ellipse' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'ellipse' ? 1 : 0.5}
               />
             </Pressable>
 
             <Pressable
               style={styles.option}
               onPress={() => {
-                setDrawingMode('text');
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'text',
+                });
               }}
             >
               <TextSvg
                 height={28}
                 width={28}
                 color={'grey'}
-                opacity={drawingMode === 'text' ? 1 : 0.5}
+                opacity={drawState.drawingMode === 'text' ? 1 : 0.5}
               />
             </Pressable>
           </View>
@@ -257,7 +274,7 @@ export default function DrawWithOption({
                 </Pressable>
               </View>
             ) : null}
-            {cancelEnabled ? (
+            {drawState.cancelEnabled ? (
               <View
                 style={{
                   ...styles.actionButton,

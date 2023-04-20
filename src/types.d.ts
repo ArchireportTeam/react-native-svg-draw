@@ -33,7 +33,12 @@ export type DrawCoreProps = {
   takeSnapshot: () => Promise<string | undefined>;
 };
 
-export type DrawState = { doneItems: DrawItem[]; screenStates: DrawItem[][] };
+export type DrawState = {
+  doneItems: DrawItem[];
+  screenStates: DrawItem[][];
+  cancelEnabled: boolean;
+  drawingMode: DrawItemType;
+};
 
 export type LinearGradientType = {
   colors: any[];
@@ -47,8 +52,17 @@ export type Action =
   | {
       type: 'ADD_SCREEN_STATE';
       currentItem: DrawItem | null;
+      cancelEnabled?: boolean;
     }
   | {
       type: 'CANCEL';
       onCancelChange?: (cancel: boolean) => void;
+    }
+  | {
+      type: 'SET_DRAWING_MODE';
+      drawingMode: DrawItemType;
+    }
+  | {
+      type: 'SET_CANCEL_ENABLED';
+      cancelEnabled: boolean;
     };

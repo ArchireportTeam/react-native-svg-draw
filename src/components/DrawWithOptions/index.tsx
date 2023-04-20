@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   View,
@@ -8,39 +8,49 @@ import {
   ImageURISource,
   Keyboard,
 } from 'react-native';
-import DrawCore from '../DrawCore';
-import type { DrawItemType, DrawCoreProps } from '../../types';
-import PenSvg from './PenSvg';
 import DoubleHeadSvg from './DoubleHeadSvg';
 import CircleSvg from './CircleSvg';
 import SquareSvg from './SquareSvg';
 import ArrowSvg from './ArrowSvg';
 import TextSvg from './TextSvg';
 import CloseSvg from './CloseSvg';
+import PenSvg from './PenSvg';
+import useDrawHook from '../DrawCore/useDrawHook';
+import Sliders from '../Slider/Sliders';
+import DrawCore from '../DrawCore';
 import ThrashSvg from './ThrashSvg';
-import SendSvg from './SendSvg';
 import CancelSvg from './CancelSvg';
+import SendSvg from './SendSvg';
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000000' },
+  container: { flex: 1 },
+  actionButton: {
+    backgroundColor: 'grey',
+    padding: 10,
+    justifyContent: 'center',
+    alignContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    borderRadius: 20,
+    width: 40,
+  },
   option: {
-    width: 30,
-    height: 30,
+    width: 22,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 8,
   },
   toolbar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 30,
     paddingTop: 15,
     paddingHorizontal: 15,
   },
   drawOptions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 10,
   },
   sendButton: {
     backgroundColor: '#3a6cff',
@@ -61,33 +71,25 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function DrawWithOptions({
-  close,
-  takeSnapshot,
+export default function DrawWithOption({
   linearGradient,
   image,
-  defaultDrawingMode = 'ellipse',
+  close,
+  takeSnapshot,
 }: {
-  close?: () => void;
-  takeSnapshot?: (snap: Promise<string | undefined>) => void;
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
-  defaultDrawingMode?: DrawItemType;
+  close?: () => void;
+  takeSnapshot?: (snap: Promise<string | undefined>) => void;
 }) {
-  const drawRef = useRef<DrawCoreProps>(null);
-
-  const [drawingMode, setDrawingMode] =
-    useState<DrawItemType>(defaultDrawingMode);
-
-  const [selectedItem, setSelectedItem] = useState(false);
-
-  const [cancelEnabled, setCancelEnabled] = useState(false);
-
-  const onPressSend = useCallback(() => {
-    if (drawRef.current) {
-      takeSnapshot?.(drawRef.current.takeSnapshot());
-    }
-  }, [takeSnapshot]);
+  const {
+    itemIsSelected,
+    cancelLastAction,
+    takeSnapshot: takeSnapshotAction,
+    deleteSelectedItem,
+    dispatchDrawStates,
+    drawState,
+  } = useDrawHook();
 
   const [showToolbar, setShowToolbar] = useState(true);
 
@@ -96,12 +98,15 @@ export default function DrawWithOptions({
       setShowToolbar(true);
     });
 
-    const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
-      // avoid events triggered by InputAccessoryView
-      if (event.endCoordinates.height > 100) {
-        setShowToolbar(false);
+    const sudDidShow = Keyboard.addListener(
+      'keyboardDidShow',
+      (event: { endCoordinates: { height: number } }) => {
+        // avoid events triggered by InputAccessoryView
+        if (event.endCoordinates.height > 100) {
+          setShowToolbar(false);
+        }
       }
-    });
+    );
 
     // cleanup function
     return () => {
@@ -110,136 +115,184 @@ export default function DrawWithOptions({
     };
   }, []);
 
+  const takeSnapshotAndGetUri = useCallback(async () => {
+    if (takeSnapshot) {
+      takeSnapshot(takeSnapshotAction());
+    }
+  }, [takeSnapshot, takeSnapshotAction]);
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
-        <Pressable style={styles.option} onPress={close}>
-          <CloseSvg height={20} width={20} fill="#ffffff" />
-        </Pressable>
+        <View style={styles.actionButton}>
+          <Pressable onPress={close}>
+            <CloseSvg height={20} width={20} fill="#ffffff" />
+          </Pressable>
+        </View>
         <View style={styles.drawOptions}>
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('pen');
+          <View
+            style={{
+              flexDirection: 'row',
+              alignSelf: 'center',
+              borderWidth: 1,
+              borderColor: 'grey',
+              borderRadius: 25,
+              height: 40,
+              paddingHorizontal: 10,
+              paddingVertical: 10,
             }}
           >
-            <PenSvg
-              height={23}
-              width={22}
-              stroke="#ffffff"
-              strokeWidth="2"
-              opacity={drawingMode === 'pen' ? 1 : 0.5}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('doubleHead');
-            }}
-          >
-            <DoubleHeadSvg
-              height={20}
-              width={20}
-              fill="#ffffff"
-              opacity={drawingMode === 'doubleHead' ? 1 : 0.5}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('singleHead');
-            }}
-          >
-            <ArrowSvg
-              height={23}
-              width={23}
-              fill="#ffffff"
-              opacity={drawingMode === 'singleHead' ? 1 : 0.5}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('rectangle');
-            }}
-          >
-            <SquareSvg
-              height={27}
-              width={27}
-              fill="#ffffff"
-              opacity={drawingMode === 'rectangle' ? 1 : 0.5}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('ellipse');
-            }}
-          >
-            <CircleSvg
-              fill="#ffffff"
-              height={26}
-              width={26}
-              opacity={drawingMode === 'ellipse' ? 1 : 0.5}
-            />
-          </Pressable>
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'pen',
+                });
+              }}
+            >
+              <PenSvg
+                height={23}
+                width={22}
+                stroke="#ffffff"
+                strokeWidth="2"
+                opacity={drawState.drawingMode === 'pen' ? 1 : 0.5}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'doubleHead',
+                });
+              }}
+            >
+              <DoubleHeadSvg
+                height={20}
+                width={20}
+                fill="#ffffff"
+                opacity={drawState.drawingMode === 'doubleHead' ? 1 : 0.5}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'singleHead',
+                });
+              }}
+            >
+              <ArrowSvg
+                height={23}
+                width={23}
+                fill="#ffffff"
+                opacity={drawState.drawingMode === 'singleHead' ? 1 : 0.5}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'rectangle',
+                });
+              }}
+            >
+              <SquareSvg
+                height={27}
+                width={27}
+                fill="#ffffff"
+                opacity={drawState.drawingMode === 'rectangle' ? 1 : 0.5}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'ellipse',
+                });
+              }}
+            >
+              <CircleSvg
+                fill="#ffffff"
+                height={26}
+                width={26}
+                opacity={drawState.drawingMode === 'ellipse' ? 1 : 0.5}
+              />
+            </Pressable>
 
-          <Pressable
-            style={styles.option}
-            onPress={() => {
-              setDrawingMode('text');
-            }}
-          >
-            <TextSvg
-              height={28}
-              width={28}
-              fill="#ffffff"
-              opacity={drawingMode === 'text' ? 1 : 0.5}
-            />
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'text',
+                });
+              }}
+            >
+              <TextSvg
+                height={28}
+                width={28}
+                color={'grey'}
+                opacity={drawState.drawingMode === 'text' ? 1 : 0.5}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.actionButton}>
+          <Pressable onPress={takeSnapshotAndGetUri}>
+            <SendSvg height={20} width={20} fill="#ffffff" />
           </Pressable>
         </View>
       </View>
-      <DrawCore
-        ref={drawRef}
-        drawingMode={drawingMode}
-        image={image}
-        linearGradient={linearGradient}
-        onSelectionChange={setSelectedItem}
-        onCancelChange={setCancelEnabled}
-      />
+      <View
+        style={{
+          marginHorizontal: 0,
+          flex: 1,
+        }}
+      >
+        <DrawCore image={image} />
+      </View>
 
-      {showToolbar ? (
-        <View style={styles.bottomToolBar}>
-          {selectedItem ? (
-            <Pressable
-              style={styles.option}
-              onPress={() => {
-                drawRef.current?.deleteSelectedItem();
-              }}
-            >
-              <ThrashSvg width={28} height={28} fill="white" />
-            </Pressable>
-          ) : null}
-          {cancelEnabled ? (
-            <Pressable
-              style={styles.option}
-              onPress={() => {
-                drawRef.current?.cancelLastAction();
-              }}
-            >
-              <CancelSvg
-                width={27}
-                height={27}
-                stroke="#ffffff"
-                strokeWidth={2}
-              />
-            </Pressable>
-          ) : null}
-          <Pressable style={styles.sendButton} onPress={onPressSend}>
-            <SendSvg fill="#fff" width={20} height={20} />
-          </Pressable>
-        </View>
-      ) : null}
+      <Sliders linearGradient={linearGradient} />
+
+      <View style={{ height: 70 }}>
+        {showToolbar ? (
+          <View style={styles.bottomToolBar}>
+            {itemIsSelected.value ? (
+              <View style={{ ...styles.actionButton, marginRight: 10 }}>
+                <Pressable style={styles.option} onPress={deleteSelectedItem}>
+                  <ThrashSvg
+                    width={28}
+                    height={28}
+                    color="white"
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
+            {drawState.cancelEnabled ? (
+              <View
+                style={{
+                  ...styles.actionButton,
+                }}
+              >
+                <Pressable style={styles.option} onPress={cancelLastAction}>
+                  <CancelSvg
+                    width={28}
+                    height={28}
+                    color={'grey'}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }

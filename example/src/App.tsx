@@ -1,17 +1,26 @@
 import * as React from 'react';
 
 import { StyleSheet, SafeAreaView, Dimensions } from 'react-native';
-import { DrawWithOptions } from '@archireport/react-native-svg-draw';
+import {
+  DrawWithOptions,
+  DrawProvider,
+} from '@archireport/react-native-svg-draw';
 import { LinearGradient } from 'expo-linear-gradient';
 import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
 
 export default gestureHandlerRootHOC(function App() {
   return (
     <SafeAreaView style={styles.container}>
-      <DrawWithOptions
-        linearGradient={LinearGradient}
-        image={require('./pexels-sebastian-palomino-2847766.jpg')}
-      />
+      <DrawProvider>
+        <DrawWithOptions
+          linearGradient={LinearGradient}
+          image={require('./pexels-sebastian-palomino-2847766.jpg')}
+          close={() => true}
+          takeSnapshot={(snap) => {
+            snap.then((uri) => console.log('snapShot uri:', uri));
+          }}
+        />
+      </DrawProvider>
     </SafeAreaView>
   );
 });

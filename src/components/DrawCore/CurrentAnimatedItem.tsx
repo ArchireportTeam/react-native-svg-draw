@@ -170,6 +170,7 @@ export default function CurrentAnimatedItem({
         cy: coordinates.cy,
         rx: coordinates.rx,
         ry: coordinates.ry,
+        fill: 'transparent',
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
         strokeWidth:
@@ -194,6 +195,7 @@ export default function CurrentAnimatedItem({
         y1: coordinates.y1,
         x2: coordinates.x2,
         y2: coordinates.y2,
+        fill: 'transparent',
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
         strokeWidth:
@@ -219,6 +221,7 @@ export default function CurrentAnimatedItem({
         y1: coordinates.y1,
         x2: coordinates.x2,
         y2: coordinates.y2,
+        fill: 'transparent',
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
         strokeWidth:
@@ -244,6 +247,7 @@ export default function CurrentAnimatedItem({
         y: coordinates.y,
         width: coordinates.width,
         height: coordinates.height,
+        fill: 'transparent',
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
         strokeWidth:
@@ -271,6 +275,7 @@ export default function CurrentAnimatedItem({
           currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'pen' ? 1 : 0,
+        fill: 'transparent',
         markerStart: 'selection',
         markerEnd: 'selection',
       };

@@ -13,7 +13,7 @@ export type hslColor = `hsl(${number}, ${number | string}%, ${
   | number
   | string}%)`;
 
-type Size = { width: number; height: number };
+export type Size = { width: number; height: number };
 
 export type DrawItem = (
   | { type: 'singleHead'; data: LineProps }
@@ -32,3 +32,37 @@ export type DrawCoreProps = {
   cancelLastAction: () => void;
   takeSnapshot: () => Promise<string | undefined>;
 };
+
+export type DrawState = {
+  doneItems: DrawItem[];
+  screenStates: DrawItem[][];
+  cancelEnabled: boolean;
+  drawingMode: DrawItemType;
+};
+
+export type LinearGradientType = {
+  colors: any[];
+  start?: { x: number; y: number };
+  end?: { x: number; y: number };
+};
+
+export type Action =
+  | { type: 'ADD_DONE_ITEM'; item: DrawItem }
+  | { type: 'DELETE_DONE_ITEM'; indice: number }
+  | {
+      type: 'ADD_SCREEN_STATE';
+      currentItem: DrawItem | null;
+      cancelEnabled?: boolean;
+    }
+  | {
+      type: 'CANCEL';
+      onCancelChange?: (cancel: boolean) => void;
+    }
+  | {
+      type: 'SET_DRAWING_MODE';
+      drawingMode: DrawItemType;
+    }
+  | {
+      type: 'SET_CANCEL_ENABLED';
+      cancelEnabled: boolean;
+    };

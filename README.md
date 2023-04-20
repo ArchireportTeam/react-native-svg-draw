@@ -49,9 +49,7 @@ import { DrawWithOptions } from 'react-native-svg-draw';
 import LinearGradient from 'react-native-linear-gradient';
 
 // ...
-<DrawProvider>
   <DrawWithOptions linearGradient={LinearGradient} />
-</DrawProvider>;
 ```
 
 ### Expo
@@ -61,16 +59,13 @@ import { DrawWithOptions } from 'react-native-svg-draw';
 import { LinearGradient } from 'expo-linear-gradient';
 
 // ...
-<DrawProvider>
   <DrawWithOptions linearGradient={LinearGradient} />
-</DrawProvider>;
 ```
 
 ---
 
 ## How it works
 
-The draw provider manage the context of the svg draw core.
 You have 2 options
 
 ### Use DrawWithOptions provided by the lib
@@ -78,8 +73,7 @@ You have 2 options
 Fast and easy way to use the lib.
 Example :
 
-```js
-<DrawProvider>
+```jsx
   <DrawWithOptions
     linearGradient={LinearGradient}
     image={require('./pexels-sebastian-palomino-2847766.jpg')}
@@ -88,13 +82,23 @@ Example :
       snap.then((uri) => console.log('snapShot uri:', uri));
     }}
   />
-</DrawProvider>
 ```
 
 ### Use your own "DrawWithOptions" component
 
 You can create your own "DrawWithOptions" component and customize the ui.
-You have to use the hook call "useDrawHook" inside your component to interact with the context. This hook expose a lot of functions and objects that can be used to interact with the drawcore.
+
+You will need to use `DrawCore` component wrapped in `DrawProvider` context.
+
+
+```jsx
+<DrawProvider>
+  <DrawCore image={require('./pexels-sebastian-palomino-2847766.jpg')}/>
+</DrawProvider>
+```
+
+
+Then you can use the hook "useDrawHook" inside your components to interact with the context. This hook expose a lot of functions and objects that can be used to interact with the `DrawCore`.
 
 ```js
   const {
@@ -139,6 +143,7 @@ Component with header and footer, based on DrawCore
 | `takeSnapshot`   | function        | (optional) called when send button (at the top right) is pressed                         |
 | `linearGradient` | React Component | implementation used for linear gradient (differs between expo and bare react native app) |
 | `image`          | image           | (optional) background picture                                                            |
+| `backgroundColor` | string | (optional) background color of the draw zone |
 
 ### DrawCore
 

@@ -21,6 +21,7 @@ import DrawCore from '../DrawCore';
 import ThrashSvg from './ThrashSvg';
 import CancelSvg from './CancelSvg';
 import SendSvg from './SendSvg';
+import DrawProvider from '../DrawCore/DrawProvider';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -71,17 +72,21 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function DrawWithOption({
-  linearGradient,
-  image,
-  close,
-  takeSnapshot,
-}: {
+type DrawWithOptionsProps = {
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
   close?: () => void;
   takeSnapshot?: (snap: Promise<string | undefined>) => void;
-}) {
+  backgroundColor?: string;
+};
+
+function DrawWithOptionsCore({
+  linearGradient,
+  image,
+  close,
+  takeSnapshot,
+  backgroundColor,
+}: DrawWithOptionsProps) {
   const {
     itemIsSelected,
     cancelLastAction,
@@ -254,7 +259,7 @@ export default function DrawWithOption({
           flex: 1,
         }}
       >
-        <DrawCore image={image} />
+        <DrawCore image={image} backgroundColor={backgroundColor} />
       </View>
 
       <Sliders linearGradient={linearGradient} />
@@ -294,5 +299,13 @@ export default function DrawWithOption({
         ) : null}
       </View>
     </View>
+  );
+}
+
+export default function DrawWithOptions(props: DrawWithOptionsProps) {
+  return (
+    <DrawProvider>
+      <DrawWithOptionsCore {...props} />
+    </DrawProvider>
   );
 }

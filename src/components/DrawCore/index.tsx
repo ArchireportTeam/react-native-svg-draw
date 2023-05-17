@@ -1146,7 +1146,9 @@ const DrawCore = ({
     }
   }, [image, drawRegion, calculateSizes]);
 
+  // do not remove keyboard will appear over the drawing frame and not shift it
   useAnimatedKeyboard();
+
   const textInputContainerStyle = useAnimatedStyle(() => {
     return {
       height: 'auto',

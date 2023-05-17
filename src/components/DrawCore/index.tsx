@@ -14,6 +14,7 @@ import {
 import Animated, {
   runOnJS,
   useAnimatedGestureHandler,
+  useAnimatedKeyboard,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -289,6 +290,8 @@ const DrawCore = ({
 
   useEffect(() => {
     if (currentItem.value?.type === 'text') {
+      showTextInput.value = true;
+      textFocus();
       currentItem.value = {
         data: currentItem.value.data,
         type: currentItem.value.type,
@@ -297,7 +300,7 @@ const DrawCore = ({
         text: textVal,
       };
     }
-  }, [currentItem, textVal]);
+  }, [currentItem, showTextInput, textFocus, textVal]);
 
   const onGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
@@ -992,23 +995,6 @@ const DrawCore = ({
 
   const textInputRef = useRef<TextInput>(null);
 
-  const textInputContainerStyle = useAnimatedStyle(() => {
-    return {
-      height: 'auto',
-      backgroundColor: 'red',
-      display: 'flex',
-      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
-    };
-  }, [showTextInput.value]);
-
-  const textInputStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: 'blue',
-      display: showTextInput.value ? 'flex' : 'none',
-      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
-    };
-  }, [showTextInput.value]);
-
   useAnimatedReaction(
     () => {
       return {
@@ -1160,8 +1146,53 @@ const DrawCore = ({
     }
   }, [image, drawRegion, calculateSizes]);
 
+  // do not remove keyboard will appear over the drawing frame and not shift it
+  useAnimatedKeyboard();
+
+  const textInputContainerStyle = useAnimatedStyle(() => {
+    return {
+      height: 'auto',
+      backgroundColor: 'red',
+      display: 'flex',
+      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
+    };
+  }, [showTextInput.value]);
+
+  const textInputStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: 'blue',
+      display: showTextInput.value ? 'flex' : 'none',
+      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
+    };
+  }, [showTextInput.value]);
+
   return (
     <View style={styles.container}>
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView>
+          <AnimatedTextInput
+            ref={textInputRef}
+            style={[styles.textInput, textInputStyle]}
+            onEndEditing={textInputRef.current?.clear}
+            onChangeText={setTextVal}
+            value={textVal}
+            autoCorrect={false}
+          />
+        </InputAccessoryView>
+      ) : (
+        <Animated.View style={textInputContainerStyle}>
+          {currentItem.value?.type === 'text' && (
+            <TextInput
+              ref={textInputRef}
+              style={styles.textInput}
+              onEndEditing={textInputRef.current?.clear}
+              onChangeText={setTextVal}
+              value={textVal}
+              autoCorrect={false}
+            />
+          )}
+        </Animated.View>
+      )}
       <View
         style={[
           styles.drawZone,
@@ -1219,29 +1250,6 @@ const DrawCore = ({
           </Animated.View>
         </PanGestureHandler>
       </View>
-      {Platform.OS === 'ios' ? (
-        <InputAccessoryView>
-          <AnimatedTextInput
-            ref={textInputRef}
-            style={[styles.textInput, textInputStyle]}
-            onEndEditing={textInputRef.current?.clear}
-            onChangeText={setTextVal}
-            value={textVal}
-            autoCorrect={false}
-          />
-        </InputAccessoryView>
-      ) : (
-        <Animated.View style={textInputContainerStyle}>
-          <TextInput
-            ref={textInputRef}
-            style={styles.textInput}
-            onEndEditing={textInputRef.current?.clear}
-            onChangeText={setTextVal}
-            value={textVal}
-            autoCorrect={false}
-          />
-        </Animated.View>
-      )}
     </View>
   );
 };

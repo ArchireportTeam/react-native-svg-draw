@@ -12,15 +12,17 @@ const DrawPad = ({
   doneItems,
   onPressItem,
   onTextHeightChange,
+  addBackground = false,
 }: {
   currentItem: Animated.SharedValue<DrawItem | null>;
   doneItems: Array<DrawItem>;
   onPressItem: (item: DrawItem, index: number) => () => void;
   onTextHeightChange: (height: number) => void;
+  addBackground?: boolean;
 }) => {
   return (
     <>
-      <Svg>
+      <Svg style={addBackground ? { backgroundColor: 'white' } : null}>
         <Defs>
           <Circle
             id="selectionIndicator"

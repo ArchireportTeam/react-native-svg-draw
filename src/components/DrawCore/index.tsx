@@ -1239,6 +1239,7 @@ const DrawCore = ({
                   style={drawRegion}
                 >
                   <DrawPad
+                    addBackground
                     currentItem={currentItem}
                     doneItems={drawState.doneItems}
                     onPressItem={onPressItem}

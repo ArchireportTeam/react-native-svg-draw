@@ -35,11 +35,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   drawZone: {
-    flex: 1,
     alignContent: 'center',
     alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
-
   bgImage: { width: '100%', height: '100%' },
   textInput: {
     backgroundColor: '#262626',

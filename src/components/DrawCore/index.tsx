@@ -1151,8 +1151,10 @@ const DrawCore = ({
 
   const textInputContainerStyle = useAnimatedStyle(() => {
     return {
-      height: 'auto',
-      backgroundColor: 'red',
+      position: 'absolute',
+      top: 0,
+      height: 50,
+      width: '100%',
       display: 'flex',
       opacity: showTextInput.value ? withTiming(1) : withTiming(0),
     };
@@ -1160,7 +1162,8 @@ const DrawCore = ({
 
   const textInputStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: 'blue',
+      color: 'white',
+      height: 20,
       display: showTextInput.value ? 'flex' : 'none',
       opacity: showTextInput.value ? withTiming(1) : withTiming(0),
     };
@@ -1168,31 +1171,6 @@ const DrawCore = ({
 
   return (
     <View style={styles.container}>
-      {Platform.OS === 'ios' ? (
-        <InputAccessoryView>
-          <AnimatedTextInput
-            ref={textInputRef}
-            style={[styles.textInput, textInputStyle]}
-            onEndEditing={textInputRef.current?.clear}
-            onChangeText={setTextVal}
-            value={textVal}
-            autoCorrect={false}
-          />
-        </InputAccessoryView>
-      ) : (
-        <Animated.View style={textInputContainerStyle}>
-          {currentItem.value?.type === 'text' && (
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              onEndEditing={textInputRef.current?.clear}
-              onChangeText={setTextVal}
-              value={textVal}
-              autoCorrect={false}
-            />
-          )}
-        </Animated.View>
-      )}
       <View
         style={[
           styles.drawZone,
@@ -1250,6 +1228,31 @@ const DrawCore = ({
             </View>
           </Animated.View>
         </PanGestureHandler>
+        {Platform.OS === 'ios' ? (
+          <InputAccessoryView>
+            <AnimatedTextInput
+              ref={textInputRef}
+              style={[styles.textInput, textInputStyle]}
+              onEndEditing={textInputRef.current?.clear}
+              onChangeText={setTextVal}
+              value={textVal}
+              autoCorrect={false}
+            />
+          </InputAccessoryView>
+        ) : (
+          <Animated.View style={textInputContainerStyle}>
+            {currentItem.value?.type === 'text' && (
+              <TextInput
+                ref={textInputRef}
+                style={styles.textInput}
+                onEndEditing={textInputRef.current?.clear}
+                onChangeText={setTextVal}
+                value={textVal}
+                autoCorrect={false}
+              />
+            )}
+          </Animated.View>
+        )}
       </View>
     </View>
   );

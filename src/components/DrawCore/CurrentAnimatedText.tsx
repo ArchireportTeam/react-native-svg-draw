@@ -6,6 +6,7 @@ import Animated, {
   useDerivedValue,
 } from 'react-native-reanimated';
 import type { DrawItem } from '../../types';
+import { hslToRgb } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({
   textBackground: {
@@ -60,8 +61,10 @@ export default function CurrentAnimatedText({
 
   const textAnimatedStyle = useAnimatedStyle(() => {
     return {
-      fontSize: 16 + (currentItem.value?.strokeWidth ?? 0),
-      color: 'white',
+      fontSize: 10 + (currentItem.value?.strokeWidth ?? 0) * 2,
+      color: currentItem.value?.color
+        ? hslToRgb(currentItem.value?.color)
+        : 'white',
     };
   }, [currentItem.value?.strokeWidth]);
 

@@ -3,6 +3,7 @@ import React, { ReactElement, useMemo, useReducer, useRef } from 'react';
 import type { Action, DrawItem, DrawState, hslColor } from '../../types';
 import { useSharedValue } from 'react-native-reanimated';
 import type ViewShot from 'react-native-view-shot';
+import { Keyboard } from 'react-native';
 
 const initialState: DrawState = {
   doneItems: [],
@@ -20,6 +21,7 @@ const reducerDrawStates = (drawState: DrawState, action: Action): DrawState => {
         cancelEnabled: action.cancelEnabled,
       };
     case 'SET_DRAWING_MODE':
+      Keyboard.dismiss();
       return {
         ...drawState,
         drawingMode: action.drawingMode,

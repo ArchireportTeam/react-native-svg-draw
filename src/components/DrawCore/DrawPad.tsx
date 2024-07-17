@@ -11,12 +11,14 @@ const DrawPad = ({
   currentItem,
   doneItems,
   onPressItem,
+  onPressItemText,
   onTextHeightChange,
   addBackground = false,
 }: {
   currentItem: Animated.SharedValue<DrawItem | null>;
   doneItems: Array<DrawItem>;
   onPressItem: (item: DrawItem, index: number) => () => void;
+  onPressItemText?: (item: DrawItem, index: number) => () => void;
   onTextHeightChange: (height: number) => void;
   addBackground?: boolean;
 }) => {
@@ -27,11 +29,11 @@ const DrawPad = ({
           <Circle
             id="selectionIndicator"
             fill="#3a6cff"
-            r={5}
+            r={10}
             cx={0}
             cy={0}
             strokeWidth={1}
-            stroke="white"
+            stroke="black"
           />
           <Marker
             id="arrowhead"
@@ -42,6 +44,20 @@ const DrawPad = ({
           >
             <Polyline
               points="-2,-2 0,0 -2,2 0,0"
+              stroke="context-stroke"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Marker>
+          <Marker
+            id="arrowheadStart"
+            markerUnits={'strokeWidth' as MarkerUnits}
+            refX="0"
+            refY="0"
+            orient="auto"
+          >
+            <Polyline
+              points="2,-2 0,0 2,2 0,0"
               stroke="context-stroke"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -75,7 +91,14 @@ const DrawPad = ({
         </Defs>
 
         {doneItems.map((item, index) => (
-          <Item key={index} item={item} onPress={onPressItem(item, index)} />
+          <Item
+            key={index}
+            item={item}
+            onPress={onPressItem(item, index)}
+            onPressText={
+              onPressItemText ? onPressItemText(item, index) : () => {}
+            }
+          />
         ))}
 
         <CurrentAnimatedItem currentItem={currentItem} />

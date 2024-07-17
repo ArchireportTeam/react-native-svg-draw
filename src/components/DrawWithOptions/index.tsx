@@ -106,6 +106,7 @@ function DrawWithOptionsCore({
     const sudDidShow = Keyboard.addListener(
       'keyboardDidShow',
       (event: { endCoordinates: { height: number } }) => {
+        console.log('keyboardDidShow dwo');
         // avoid events triggered by InputAccessoryView
         if (event.endCoordinates.height > 100) {
           setShowToolbar(false);
@@ -242,6 +243,23 @@ function DrawWithOptionsCore({
                 width={28}
                 color={'grey'}
                 opacity={drawState.drawingMode === 'text' ? 1 : 0.5}
+              />
+            </Pressable>
+
+            <Pressable
+              style={styles.option}
+              onPress={() => {
+                dispatchDrawStates({
+                  type: 'SET_DRAWING_MODE',
+                  drawingMode: 'doubleArrows',
+                });
+              }}
+            >
+              <DoubleHeadSvg
+                height={20}
+                width={20}
+                fill="#ffffff"
+                opacity={drawState.drawingMode === 'doubleArrows' ? 1 : 0.5}
               />
             </Pressable>
           </View>

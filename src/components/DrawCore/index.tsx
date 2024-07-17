@@ -10,6 +10,10 @@ import {
   ImageURISource,
   InputAccessoryView,
   Platform,
+  Modal,
+  Text,
+  Pressable,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Animated, {
   runOnJS,
@@ -29,6 +33,7 @@ import type { DrawItem, DrawItemType, hslColor, Size } from '../../types';
 import DrawPad from './DrawPad';
 import ViewShot from 'react-native-view-shot';
 import useDrawHook from './useDrawHook';
+import { hslToRgb } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({
   container: {
@@ -48,6 +53,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     width: '100%',
+    opacity: 0,
   },
 });
 
@@ -153,6 +159,19 @@ const drawNewItem = (
       break;
     case 'singleHead':
     case 'doubleHead':
+      currentItem.value = {
+        type: mode.value,
+        data: {
+          x1: position.x,
+          y1: position.y,
+          x2: position.x,
+          y2: position.y,
+        },
+        strokeWidth: style.strokeWidth.value,
+        color: style.color.value,
+      };
+      break;
+    case 'doubleArrows':
       currentItem.value = {
         type: mode.value,
         data: {
@@ -282,14 +301,24 @@ const DrawCore = ({
     itemIsSelected.value = false;
   }, [drawState.drawingMode, mode, currentItem, addDoneItem, itemIsSelected]);
 
-  const showTextInput = useSharedValue(false);
+  const showTextInput = useSharedValue(false); //TODO: remove
+
+  const inputEl = useRef<TextInput | null>(null);
+  const [showTextInputState, setShowTextInputState] = useState<Boolean>(false);
+  const textFocusState = useCallback(() => {
+    setShowTextInputState(true);
+    console.log('textFocusState');
+    inputEl.current?.focus();
+  }, [setShowTextInputState]);
 
   const textFocus = useCallback(() => {
+    console.log('textFocus');
     textInputRef.current?.focus();
   }, []);
 
   useEffect(() => {
     if (currentItem.value?.type === 'text') {
+      console.log('use effect text');
       showTextInput.value = true;
       textFocus();
       currentItem.value = {
@@ -310,9 +339,10 @@ const DrawCore = ({
       ctx.startX = startX;
       ctx.startY = startY;
       ctx.newlyCreated = false;
-
+      console.log('**********************************');
+      console.log('onGestureEvent');
       //panPosition.value = withTiming(RIGHT_PANE_WIDTH);
-
+      console.log('onStart', currentItem.value?.type);
       initialItem.value = currentItem.value;
       switch (currentItem.value?.type) {
         case 'ellipse':
@@ -427,6 +457,7 @@ const DrawCore = ({
 
           break;
         case 'doubleHead':
+        case 'doubleArrows':
         case 'singleHead':
           const x1 =
             typeof currentItem.value.data.x1 === 'string'
@@ -489,7 +520,8 @@ const DrawCore = ({
             typeof currentItem.value.data.height === 'string'
               ? parseFloat(currentItem.value.data.height)
               : currentItem.value.data.height || 0;
-
+          console.log(heightText);
+          console.log(widthText);
           if (
             startX <= xText + THRESHOLD &&
             startX >= xText - THRESHOLD &&
@@ -515,9 +547,26 @@ const DrawCore = ({
               (heightText < 0 && startY < yText && startY > yText + heightText))
           ) {
             ctx.zone = 'CENTER';
+            console.log('on active center');
           } else {
             ctx.zone = 'OUT';
+            console.log('on active out');
             initialItem.value = null;
+
+            ctx.newlyCreated = true;
+            runOnJS(setTextVal)('');
+            drawNewItem(
+              mode,
+              currentItem,
+              addDoneItem,
+              { x: startX, y: startY },
+              { textBaseHeight, strokeWidth, color }
+            );
+
+            itemIsSelected!.value = true;
+            onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+
+            runOnJS(textFocus)();
           }
 
           break;
@@ -540,6 +589,26 @@ const DrawCore = ({
         default:
           ctx.zone = 'OUT';
           initialItem.value = null;
+          if (drawState.drawingMode === 'text') {
+            /* NEW GEOFF */
+            console.log('on active out');
+            ctx.newlyCreated = true;
+
+            runOnJS(setTextVal)('');
+
+            drawNewItem(
+              mode,
+              currentItem,
+              addDoneItem,
+              { x: startX, y: startY },
+              { textBaseHeight, strokeWidth, color }
+            );
+
+            itemIsSelected!.value = true;
+            onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+
+            runOnJS(textFocus)();
+          }
           break;
       }
     },
@@ -548,11 +617,13 @@ const DrawCore = ({
       ctx
     ) => {
       const { startX, startY, zone, newlyCreated } = ctx;
-      if (zone === 'OUT' && newlyCreated === false) {
+      if (zone === 'OUT' && newlyCreated === false && mode.value !== 'text') {
+        console.log('on active out');
         ctx.newlyCreated = true;
+        /*
         if (mode.value === 'text') {
           runOnJS(setTextVal)('');
-        }
+        }*/
         drawNewItem(
           mode,
           currentItem,
@@ -800,6 +871,7 @@ const DrawCore = ({
           break;
         case 'singleHead':
         case 'doubleHead':
+        case 'doubleArrows':
           if (initialItem.value?.type === currentItem.value.type) {
             const x1 =
               typeof initialItem.value?.data.x1 === 'string'
@@ -877,6 +949,7 @@ const DrawCore = ({
           }
           break;
         case 'text':
+          console.log('on active text');
           if (initialItem.value?.type === currentItem.value.type) {
             const xText =
               typeof initialItem.value?.data.x === 'string'
@@ -956,6 +1029,9 @@ const DrawCore = ({
       }
     },
     onEnd: (_event) => {
+      if (currentItem.value?.type === 'doubleArrows') {
+        runOnJS(textFocusState)();
+      }
       if (currentItem.value?.type === 'text') {
         runOnJS(textFocus)();
 
@@ -981,6 +1057,7 @@ const DrawCore = ({
 
     const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
       // avoid events triggered by InputAccessoryView
+      console.log('keyboardDidShow dc');
       if (event.endCoordinates.height > 100) {
         showTextInput.value = true;
       }
@@ -1011,38 +1088,10 @@ const DrawCore = ({
     }) => {
       switch (currentItem.value?.type) {
         case 'singleHead':
-          currentItem.value = {
-            type: currentItem.value.type,
-            data: currentItem.value.data,
-            strokeWidth: sw,
-            color: c,
-          };
-          break;
         case 'doubleHead':
-          currentItem.value = {
-            type: currentItem.value.type,
-            data: currentItem.value.data,
-            strokeWidth: sw,
-            color: c,
-          };
-          break;
+        case 'doubleArrows':
         case 'ellipse':
-          currentItem.value = {
-            type: currentItem.value.type,
-            data: currentItem.value.data,
-            strokeWidth: sw,
-            color: c,
-          };
-          break;
         case 'rectangle':
-          currentItem.value = {
-            type: currentItem.value.type,
-            data: currentItem.value.data,
-            strokeWidth: sw,
-            color: c,
-          };
-          break;
-
         case 'pen':
           currentItem.value = {
             type: currentItem.value.type,
@@ -1067,6 +1116,7 @@ const DrawCore = ({
 
   const onPressItem = useCallback(
     (item: DrawItem, index: number) => () => {
+      console.log('onPressItem');
       itemIsSelected.value = true;
 
       const previousItem = currentItem.value;
@@ -1083,6 +1133,7 @@ const DrawCore = ({
 
       if (item.type === 'text') {
         setTextVal(item.text ?? '');
+        textInputRef.current?.focus();
       } else {
         textInputRef.current?.blur();
       }
@@ -1096,6 +1147,39 @@ const DrawCore = ({
       addDoneItem,
     ]
   );
+  /*
+  const onPressItemText = useCallback(
+    (item: DrawItem, index: number) => () => {
+      itemIsSelected.value = true;
+
+      const previousItem = currentItem.value;
+
+      strokeWidth.value = item.strokeWidth;
+      color.value = item.color;
+      currentItem.value = item;
+
+      deleteDoneItem(index);
+
+      if (previousItem) {
+        addDoneItem(previousItem);
+      }
+
+      if (item.type === 'text') {
+        setTextVal(item.text ?? '');
+        
+      } else {
+        textInputRef.current?.blur();
+      }
+    },
+    [
+      itemIsSelected,
+      currentItem,
+      strokeWidth,
+      color,
+      deleteDoneItem,
+      addDoneItem,
+    ]
+  );*/
 
   const onTextHeightChange = useCallback(
     (height: number) => {
@@ -1161,14 +1245,62 @@ const DrawCore = ({
   }, [showTextInput.value]);
 
   const textInputStyle = useAnimatedStyle(() => {
+    console.log('********************************');
+    console.log('textInputStyle useAnimatedStyle');
+    console.log(
+      'color ',
+      currentItem.value?.color ? hslToRgb(currentItem.value?.color) : 'white'
+    );
+    console.log(
+      'height',
+      currentItem.value?.strokeWidth ? currentItem.value?.strokeWidth : 20
+    );
     return {
-      color: 'white',
-      height: 20,
-      display: showTextInput.value ? 'flex' : 'none',
-      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
+      color: currentItem.value?.color
+        ? hslToRgb(currentItem.value?.color)
+        : 'white',
+      height: currentItem.value?.strokeWidth
+        ? currentItem.value?.strokeWidth
+        : 20,
+      display:
+        showTextInput.value && drawState.drawingMode === 'text'
+          ? 'flex'
+          : 'none',
+      opacity:
+        showTextInput.value && drawState.drawingMode === 'text'
+          ? withTiming(1)
+          : withTiming(0),
     };
-  }, [showTextInput.value]);
+  }, [showTextInput.value, drawState.drawingMode]);
 
+  const onEndEditingTextInput = useCallback(() => {
+    console.log('onEndEditingTextInput');
+    setShowTextInputState(false);
+    if (currentItem.value && currentItem.value.type === 'doubleArrows') {
+      console.log(currentItem.value.text);
+      addScreenStates(currentItem.value);
+    }
+  }, [currentItem, addScreenStates]);
+
+  const onChangeText = useCallback(
+    (value: string) => {
+      if (
+        value &&
+        currentItem.value &&
+        currentItem.value.type === 'doubleArrows'
+      ) {
+        console.log('******************');
+        console.log(value);
+        console.log(currentItem.value);
+
+        currentItem.value = {
+          ...currentItem.value,
+          text: value,
+        };
+      }
+    },
+    [currentItem]
+  );
   return (
     <View style={styles.container}>
       <View
@@ -1183,6 +1315,14 @@ const DrawCore = ({
           });
         }}
       >
+        {showTextInputState ? (
+          <TextInput
+            ref={inputEl}
+            style={{ height: 20, width: 100, backgroundColor: 'yellow' }}
+            onEndEditing={onEndEditingTextInput}
+            onChangeText={onChangeText}
+          />
+        ) : null}
         <PanGestureHandler onGestureEvent={onGestureEvent}>
           <Animated.View style={imageSize || drawRegion}>
             <View ref={drawContainer}>
@@ -1228,7 +1368,16 @@ const DrawCore = ({
             </View>
           </Animated.View>
         </PanGestureHandler>
-        {Platform.OS === 'ios' ? (
+
+        <TextInput
+          ref={textInputRef}
+          style={styles.textInput}
+          onEndEditing={textInputRef.current?.clear}
+          onChangeText={setTextVal}
+          value={textVal}
+          autoCorrect={false}
+        />
+        {/*Platform.OS === 'ios' ? (
           <InputAccessoryView>
             <AnimatedTextInput
               ref={textInputRef}
@@ -1238,6 +1387,9 @@ const DrawCore = ({
               value={textVal}
               autoCorrect={false}
             />
+            <View
+              style={{ height: 10, width: '100%', backgroundColor: 'green' }}
+            ></View>
           </InputAccessoryView>
         ) : (
           <Animated.View style={textInputContainerStyle}>
@@ -1252,7 +1404,7 @@ const DrawCore = ({
               />
             )}
           </Animated.View>
-        )}
+        )*/}
       </View>
     </View>
   );

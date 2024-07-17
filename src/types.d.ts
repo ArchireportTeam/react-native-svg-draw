@@ -18,6 +18,13 @@ export type Size = { width: number; height: number };
 export type DrawItem = (
   | { type: 'singleHead'; data: LineProps }
   | { type: 'doubleHead'; data: LineProps }
+  | {
+      type: 'doubleArrows';
+      data: LineProps;
+      text?: string;
+      strokeWidth: number;
+      color?: string;
+    }
   | { type: 'rectangle'; data: RectProps }
   | { type: 'ellipse'; data: EllipseProps }
   | { type: 'text'; data: ForeignObjectProps; text?: string }

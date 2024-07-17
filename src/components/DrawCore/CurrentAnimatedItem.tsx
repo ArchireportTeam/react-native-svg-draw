@@ -4,7 +4,7 @@ import Animated, {
   processColor,
   useAnimatedProps,
 } from 'react-native-reanimated';
-import { Path, Ellipse, Rect, Line, G } from 'react-native-svg';
+import { Path, Ellipse, Rect, Line, G, Text } from 'react-native-svg';
 import type { DrawItem, hslColor, Point } from '../../types';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -109,7 +109,7 @@ function hue2rgb(p: number, q: number, t: number) {
 }
 
 // see https://github.com/software-mansion/react-native-reanimated/issues/1909
-function hslToRgb(col: hslColor) {
+export function hslToRgb(col: hslColor) {
   'worklet';
   const hslRegExp = new RegExp(/hsl\(([\d.]+),\s*(\d+)%,\s*([\d.]+)%\)/);
   const res = hslRegExp.exec(col);
@@ -236,6 +236,33 @@ export default function CurrentAnimatedItem({
     propAdapter
   );
 
+  const doubleArrowsAnimatedProps = useAnimatedProps(
+    () => {
+      const coordinates =
+        currentItem.value?.type === 'doubleArrows'
+          ? currentItem.value.data
+          : { x1: -10, y1: -10, x2: -10, y2: -10 };
+
+      return {
+        x1: coordinates.x1,
+        y1: coordinates.y1,
+        x2: coordinates.x2,
+        y2: coordinates.y2,
+        fill: 'transparent',
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'doubleArrows'
+            ? currentItem.value.strokeWidth
+            : 0,
+        markerStart: 'arrowheadStart',
+        markerEnd: 'arrowhead',
+      };
+    },
+    null,
+    propAdapter
+  );
+
   const rectangleAnimatedProps = useAnimatedProps(
     () => {
       const coordinates =
@@ -283,7 +310,17 @@ export default function CurrentAnimatedItem({
     null,
     propAdapter
   );
+  /*
 
+      
+      <G markerStart="url(#selection)" markerEnd="url(#selection)">
+        <AnimatedLine animatedProps={doubleArrowsAnimatedProps} />
+      </G>
+      <Text x="100" y="75" stroke="#600" fill="#600" textAnchor="middle">
+          Text
+        </Text>
+        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsRight} />
+      */
   return (
     <>
       <AnimatedEllipse animatedProps={ellipseAnimatedProps} />
@@ -292,6 +329,9 @@ export default function CurrentAnimatedItem({
       </G>
       <G markerStart="url(#selection)" markerEnd="url(#selection)">
         <AnimatedLine animatedProps={doubleHeadAnimatedProps} />
+      </G>
+      <G markerStart="url(#selection)" markerEnd="url(#selection)">
+        <AnimatedLine animatedProps={doubleArrowsAnimatedProps} />
       </G>
       <AnimatedRectangle animatedProps={rectangleAnimatedProps} />
       <AnimatedPath animatedProps={penAnimatedProps} />

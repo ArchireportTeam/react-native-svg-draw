@@ -1,5 +1,6 @@
 import type { DrawItem, hslColor, DrawState, Action } from '../../types';
 import { createContext, RefObject } from 'react';
+import { TextInput } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import type ViewShot from 'react-native-view-shot';
 
@@ -11,6 +12,7 @@ export const DrawContext = createContext<{
   currentItem?: SharedValue<DrawItem | null>;
   itemIsSelected?: SharedValue<boolean>;
   viewShot?: RefObject<ViewShot>;
+  doubleArrowTextInput?: RefObject<TextInput>;
 }>({
   drawState: {
     doneItems: [],

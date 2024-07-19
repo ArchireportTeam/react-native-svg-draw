@@ -1,11 +1,19 @@
 import React from 'react';
 import type Animated from 'react-native-reanimated';
-import Svg, { Circle, Defs, Marker, Polyline, Use } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Marker,
+  Polyline,
+  Text,
+  Use,
+} from 'react-native-svg';
 import CurrentAnimatedItem from './CurrentAnimatedItem';
 import CurrentAnimatedText from './CurrentAnimatedText';
 import Item from './Item';
 import type { DrawItem } from '../../types';
 import type { MarkerUnits } from 'react-native-svg/lib/typescript/elements/Marker';
+import { KeyboardAvoidingView } from 'react-native';
 
 const DrawPad = ({
   currentItem,
@@ -91,17 +99,10 @@ const DrawPad = ({
         </Defs>
 
         {doneItems.map((item, index) => (
-          <Item
-            key={index}
-            item={item}
-            onPress={onPressItem(item, index)}
-            onPressText={
-              onPressItemText ? onPressItemText(item, index) : () => {}
-            }
-          />
+          <Item key={index} item={item} onPress={onPressItem(item, index)} />
         ))}
 
-        <CurrentAnimatedItem currentItem={currentItem} />
+        <CurrentAnimatedItem />
       </Svg>
       <CurrentAnimatedText
         currentItem={currentItem}

@@ -1,11 +1,21 @@
 import React from 'react';
 import Animated, {
+  Extrapolation,
   createAnimatedPropAdapter,
+  interpolate,
   processColor,
+  runOnJS,
   useAnimatedProps,
+  useAnimatedReaction,
 } from 'react-native-reanimated';
-import { Path, Ellipse, Rect, Line, G, Text } from 'react-native-svg';
+import { Path, Ellipse, Rect, Line, G, Text, Circle } from 'react-native-svg';
 import type { DrawItem, hslColor, Point } from '../../types';
+import { TextInput } from 'react-native';
+import useDrawHook from './useDrawHook';
+import { rotationHandlerName } from 'react-native-gesture-handler/lib/typescript/handlers/RotationGestureHandler';
+import { RotationGesture } from 'react-native-gesture-handler/lib/typescript/handlers/gestures/rotationGesture';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+//import { TextInput } from 'react-native-gesture-handler';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -14,6 +24,10 @@ const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedRectangle = Animated.createAnimatedComponent(Rect);
 
 const AnimatedLine = Animated.createAnimatedComponent(Line);
+
+//const AnimatedText = Animated.createAnimatedComponent(Text);
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 // properties of a line
 const line = (pointA: Point, pointB: Point) => {
@@ -153,11 +167,18 @@ const propAdapter = createAnimatedPropAdapter(
   ['fill', 'stroke']
 );
 
-export default function CurrentAnimatedItem({
-  currentItem,
-}: {
-  currentItem: Animated.SharedValue<DrawItem | null>;
-}) {
+export default function CurrentAnimatedItem() {
+  const { currentItem, doubleArrowTextInput } = useDrawHook();
+
+  const getTextLength = () => {
+    'worklet';
+    const text =
+      currentItem.value?.type === 'doubleArrows' ? currentItem.value?.text : '';
+
+    const textLength = text && text.length > 5 ? text.length * 10 : 50;
+    return textLength;
+  };
+
   const ellipseAnimatedProps = useAnimatedProps(
     () => {
       const coordinates =
@@ -235,19 +256,115 @@ export default function CurrentAnimatedItem({
     null,
     propAdapter
   );
+  const distance = (x1: number, y1: number, x2: number, y2: number) => {
+    'worklet';
+    return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+  };
 
-  const doubleArrowsAnimatedProps = useAnimatedProps(
+  const getCoordinatesWithRatio = ({
+    c1,
+    c2,
+    ratio,
+    first = true,
+  }: {
+    c1: number;
+    c2: number;
+    ratio: number;
+    first?: boolean;
+  }): [number, number] => {
+    'worklet';
+    let newC1 = c1;
+    let newC2 = c2;
+
+    if (c1 > c2) {
+      if (first) {
+        newC1 = c1;
+        newC2 = c1 - (c1 - c2) * ratio;
+      } else {
+        newC1 = c2 + (c1 - c2) * ratio;
+        newC2 = c2;
+      }
+    } else {
+      if (first) {
+        newC1 = c1;
+        newC2 = c1 + (c2 - c1) * ratio;
+      } else {
+        newC1 = c2 - (c2 - c1) * ratio;
+        newC2 = c2;
+      }
+    }
+
+    return [newC1 as number, newC2 as number];
+  };
+
+  const getGetcoordinateValue = ({
+    x1,
+    y1,
+    x2,
+    y2,
+    first = true,
+  }: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    first: boolean;
+  }) => {
+    'worklet';
+    //console.log('*******************');
+    const dist = distance(x1, y1, x2, y2);
+    const textLength = getTextLength();
+    const newDist = (!textLength ? dist : dist - textLength) / 2;
+
+    let newX1 = x1;
+    let newY1 = y1;
+    let newX2 = x2;
+    let newY2 = y2;
+
+    //if (newDist > textLength / 2 && !isShortArrow) {
+    const ratio = newDist / dist;
+    [newX1, newX2] = getCoordinatesWithRatio({
+      c1: x1,
+      c2: x2,
+      ratio,
+      first,
+    });
+    [newY1, newY2] = getCoordinatesWithRatio({
+      c1: y1,
+      c2: y2,
+      ratio,
+      first,
+    });
+    //}
+    return [newX1, newY1, newX2, newY2];
+  };
+
+  const doubleArrowsAnimatedPropsFirst = useAnimatedProps(
     () => {
-      const coordinates =
-        currentItem.value?.type === 'doubleArrows'
-          ? currentItem.value.data
-          : { x1: -10, y1: -10, x2: -10, y2: -10 };
+      let x1, y1, x2, y2;
+
+      if (currentItem.value?.type !== 'doubleArrows') {
+        x1 = -10;
+        y1 = -10;
+        x2 = -10;
+        y2 = -10;
+      } else {
+        const coordinates = currentItem.value.data;
+        [x1, y1, x2, y2] = getGetcoordinateValue({
+          x1: Number(coordinates.x1),
+          y1: Number(coordinates.y1),
+          x2: Number(coordinates.x2),
+          y2: Number(coordinates.y2),
+          first: true,
+          text: currentItem.value?.text,
+        });
+      }
 
       return {
-        x1: coordinates.x1,
-        y1: coordinates.y1,
-        x2: coordinates.x2,
-        y2: coordinates.y2,
+        x1,
+        y1,
+        x2,
+        y2,
         fill: 'transparent',
         stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
@@ -256,7 +373,115 @@ export default function CurrentAnimatedItem({
             ? currentItem.value.strokeWidth
             : 0,
         markerStart: 'arrowheadStart',
+      };
+    },
+    null,
+    propAdapter
+  );
+
+  const doubleArrowsAnimatedPropsLast = useAnimatedProps(
+    () => {
+      let x1, y1, x2, y2;
+
+      if (currentItem.value?.type !== 'doubleArrows') {
+        x1 = -10;
+        y1 = -10;
+        x2 = -10;
+        y2 = -10;
+      } else {
+        const coordinates = currentItem.value.data;
+        [x1, y1, x2, y2] = getGetcoordinateValue({
+          x1: Number(coordinates.x1),
+          y1: Number(coordinates.y1),
+          x2: Number(coordinates.x2),
+          y2: Number(coordinates.y2),
+          first: false,
+          text: currentItem.value?.text,
+        });
+      }
+
+      return {
+        x1,
+        y1,
+        x2,
+        y2,
+        fill: 'transparent',
+        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
+        strokeWidth:
+          currentItem.value?.type === 'doubleArrows'
+            ? currentItem.value.strokeWidth
+            : 0,
         markerEnd: 'arrowhead',
+      };
+    },
+    null,
+    propAdapter
+  );
+
+  const getTextValues = ({
+    x1,
+    y1,
+    x2,
+    y2,
+  }: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  }): [number, number, number] => {
+    'worklet';
+    const dist = distance(x1, y1, x2, y2);
+    const ratio = 0.5;
+    const newX = (x1 + x2) * ratio;
+    const newY = (y1 + y2) * ratio;
+
+    let angle = 0;
+    if (x1 > x2) {
+      if (y1 > y2) {
+        angle = Math.acos((x1 - x2) / dist) * (180 / Math.PI);
+      } else {
+        angle = 180 - Math.acos((x1 - x2) / dist) * (180 / Math.PI) + 180;
+      }
+    } else {
+      if (y1 > y2) {
+        angle = 180 - Math.acos((x2 - x1) / dist) * (180 / Math.PI) + 180;
+      } else {
+        angle = Math.acos((x2 - x1) / dist) * (180 / Math.PI);
+      }
+    }
+
+    return [newX, newY, angle];
+  };
+  const doubleArrowsAnimatedPropsText = useAnimatedProps(
+    () => {
+      let x = 0,
+        y = 0,
+        angle = 0;
+
+      if (currentItem.value?.type !== 'doubleArrows') {
+        x = -50;
+        y = -50;
+        angle = 0;
+      } else {
+        const coordinates = currentItem.value.data;
+        [x, y, angle] = getTextValues({
+          x1: Number(coordinates.x1),
+          y1: Number(coordinates.y1),
+          x2: Number(coordinates.x2),
+          y2: Number(coordinates.y2),
+        });
+      }
+
+      return {
+        top: y - 10,
+        left: x - getTextLength() / 2,
+        fontSize: 10 + (currentItem.value?.strokeWidth ?? 0) * 2,
+        color: currentItem.value?.color
+          ? hslToRgb(currentItem.value?.color)
+          : 'white',
+        transform: [{ rotateZ: `${angle}deg` }],
+        width: getTextLength(),
       };
     },
     null,
@@ -310,17 +535,25 @@ export default function CurrentAnimatedItem({
     null,
     propAdapter
   );
-  /*
 
-      
-      <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine animatedProps={doubleArrowsAnimatedProps} />
-      </G>
-      <Text x="100" y="75" stroke="#600" fill="#600" textAnchor="middle">
-          Text
-        </Text>
-        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsRight} />
-      */
+  const updateText = (value: string) => {
+    if (!doubleArrowTextInput?.current) return;
+    doubleArrowTextInput.current.setNativeProps({
+      text: value,
+    });
+  };
+  useAnimatedReaction(
+    () => {
+      return currentItem.value?.type === 'doubleArrows'
+        ? currentItem.value?.text || ''
+        : '';
+    },
+    (value) => {
+      if (updateText) runOnJS(updateText)(value);
+    },
+    [updateText, doubleArrowTextInput]
+  );
+
   return (
     <>
       <AnimatedEllipse animatedProps={ellipseAnimatedProps} />
@@ -331,8 +564,41 @@ export default function CurrentAnimatedItem({
         <AnimatedLine animatedProps={doubleHeadAnimatedProps} />
       </G>
       <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine animatedProps={doubleArrowsAnimatedProps} />
+        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsFirst} />
+
+        <AnimatedTextInput
+          animatedProps={{
+            ...(doubleArrowsAnimatedPropsText as any), // Type cast to bypass the type error
+            // Ensure other relevant props if needed
+          }}
+          value={
+            currentItem.value?.type === 'doubleArrows'
+              ? currentItem.value.text
+              : ''
+          }
+          ref={doubleArrowTextInput}
+          underlineColorAndroid={'transparent'}
+          onChangeText={(text) => {
+            console.log('onChangeText', text);
+            if (currentItem.value?.type === 'doubleArrows') {
+              currentItem.value = {
+                ...currentItem.value,
+                text,
+              };
+            }
+          }}
+          style={{
+            color: 'black',
+            fontSize: 24,
+            borderWidth: 1,
+            borderColor: 'black',
+            position: 'absolute',
+          }}
+        />
+
+        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsLast} />
       </G>
+
       <AnimatedRectangle animatedProps={rectangleAnimatedProps} />
       <AnimatedPath animatedProps={penAnimatedProps} />
     </>

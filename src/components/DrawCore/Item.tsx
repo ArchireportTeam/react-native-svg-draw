@@ -27,26 +27,30 @@ const styles = StyleSheet.create({
   },
 });
 
-const distance = (x1: number, y1: number, x2: number, y2: number) => {
+export const distance = (x1: number, y1: number, x2: number, y2: number) => {
   return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 };
 
-const getGetcoordinateValue = ({
+export const getGetcoordinateValue = ({
   x1,
   y1,
   x2,
   y2,
   first = true,
+  text = '',
 }: {
   x1: number;
   y1: number;
   x2: number;
   y2: number;
   first: boolean;
+  text: string;
 }) => {
   const dist = distance(x1, y1, x2, y2);
-  const textLength = 35;
-  const newDist = (dist - textLength) / 2;
+  const textLength = text && text.length > 5 ? text.length * 10 : 50;
+  //const isShortArrow = textLength > dist;
+  const newDist = (!textLength ? dist : dist - textLength) / 2;
+
   const ratio = newDist / dist;
   let newX1 = x1;
   let newY1 = y1;
@@ -70,7 +74,7 @@ const getGetcoordinateValue = ({
   return [newX1, newY1, newX2, newY2];
 };
 
-const getCoordinatesWithRatio = ({
+export const getCoordinatesWithRatio = ({
   c1,
   c2,
   ratio,
@@ -86,26 +90,22 @@ const getCoordinatesWithRatio = ({
 
   if (c1 > c2) {
     if (first) {
-      newC1 = c1;
       newC2 = c1 - (c1 - c2) * ratio;
     } else {
       newC1 = c2 + (c1 - c2) * ratio;
-      newC2 = c2;
     }
   } else {
     if (first) {
-      newC1 = c1;
       newC2 = c1 + (c2 - c1) * ratio;
     } else {
       newC1 = c2 - (c2 - c1) * ratio;
-      newC2 = c2;
     }
   }
 
   return [newC1 as number, newC2 as number];
 };
 
-const doubleArrowsProps = (item: DrawItem, first: boolean) => {
+export const doubleArrowsProps = (item: DrawItem, first: boolean) => {
   const coordinates =
     item.type === 'doubleArrows'
       ? item.data
@@ -117,6 +117,7 @@ const doubleArrowsProps = (item: DrawItem, first: boolean) => {
     x2: Number(coordinates.x2),
     y2: Number(coordinates.y2),
     first: first,
+    text: item.type === 'doubleArrows' && item.text ? item.text : '',
   });
   return {
     x1: String(x1),
@@ -126,7 +127,7 @@ const doubleArrowsProps = (item: DrawItem, first: boolean) => {
   };
 };
 
-const getTextValues = ({
+export const getTextValues = ({
   x1,
   y1,
   x2,
@@ -139,39 +140,32 @@ const getTextValues = ({
 }) => {
   const dist = distance(x1, y1, x2, y2);
   const ratio = 0.5;
-  let newX = x1;
-  let newY = y1;
+  const newX = (x1 + x2) * ratio;
+  const newY = (y1 + y2) * ratio;
+
   let angle = 0;
   if (x1 > x2) {
-    newX = x1 - (x1 - x2) * ratio;
     if (y1 > y2) {
       angle = Math.acos((x1 - x2) / dist) * (180 / Math.PI);
     } else {
       angle = 180 - Math.acos((x1 - x2) / dist) * (180 / Math.PI) + 180;
     }
   } else {
-    newX = x1 + (x2 - x1) * ratio;
     if (y1 > y2) {
       angle = 180 - Math.acos((x2 - x1) / dist) * (180 / Math.PI) + 180;
     } else {
       angle = Math.acos((x2 - x1) / dist) * (180 / Math.PI);
     }
   }
-  if (y1 > y2) {
-    newY = y2 + (y1 - y2) * ratio;
-  } else {
-    newY = y1 + (y2 - y1) * ratio;
-  }
+
   return [newX, newY, angle];
 };
 export default function Item({
   item,
   onPress,
-  onPressText,
 }: {
   item: DrawItem;
   onPress: () => void;
-  onPressText: () => void;
 }) {
   switch (item.type) {
     case 'singleHead':
@@ -200,17 +194,12 @@ export default function Item({
         </G>
       );
     case 'doubleArrows':
-      //console.log('doubleArrowsProps item', item);
-      //console.log('doubleArrowsProps itemfirst', doubleArrowsProps(item, true));
       const [textX, textY, angle] = getTextValues({
         x1: Number(item.data.x1),
         y1: Number(item.data.y1),
         x2: Number(item.data.x2),
         y2: Number(item.data.y2),
       });
-      //console.log('doubleArrowsProps angle', angle);
-      //console.log('doubleArrowsProps textX', textX);
-      //console.log('doubleArrowsProps textY', textY);
       return (
         <G>
           <Line
@@ -227,7 +216,7 @@ export default function Item({
               fill={item.color}
               textAnchor="middle"
               fontSize={item.strokeWidth + 10}
-              onPress={onPressText}
+              onPress={onPress}
             >
               {item.text}
             </SvgText>

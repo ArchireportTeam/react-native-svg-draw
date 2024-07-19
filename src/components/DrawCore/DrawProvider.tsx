@@ -4,6 +4,7 @@ import type { Action, DrawItem, DrawState, hslColor } from '../../types';
 import { useSharedValue } from 'react-native-reanimated';
 import type ViewShot from 'react-native-view-shot';
 import { Keyboard } from 'react-native';
+import { TextInput } from 'react-native-gesture-handler';
 
 const initialState: DrawState = {
   doneItems: [],
@@ -89,6 +90,7 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
   const color = useSharedValue<hslColor>('hsl(0, 100%, 0%)');
   const currentItem = useSharedValue<DrawItem | null>(null);
   const viewShot = useRef<ViewShot>(null);
+  const doubleArrowTextInput = useRef<TextInput>(null);
 
   const [drawState, dispatchDrawStates] = useReducer(
     reducerDrawStates,
@@ -104,6 +106,7 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       currentItem,
       itemIsSelected,
       viewShot,
+      doubleArrowTextInput,
     }),
     [
       drawState,
@@ -113,6 +116,7 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       currentItem,
       itemIsSelected,
       viewShot,
+      doubleArrowTextInput,
     ]
   );
 

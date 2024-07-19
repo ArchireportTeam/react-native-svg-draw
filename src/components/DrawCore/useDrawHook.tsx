@@ -10,6 +10,7 @@ const useDrawHook = () => {
     currentItem,
     itemIsSelected,
     viewShot,
+    doubleArrowTextInput,
   } = useContext(DrawContext);
 
   const takeSnapshot = useCallback(async () => {
@@ -64,6 +65,7 @@ const useDrawHook = () => {
     takeSnapshot: takeSnapshot!,
     viewShot: viewShot!,
     deleteSelectedItem,
+    doubleArrowTextInput,
   };
 };
 

@@ -8,11 +8,6 @@ import {
   Image,
   ImageRequireSource,
   ImageURISource,
-  InputAccessoryView,
-  Platform,
-  Modal,
-  Text,
-  Pressable,
   KeyboardAvoidingView,
 } from 'react-native';
 import Animated, {
@@ -54,6 +49,8 @@ const styles = StyleSheet.create({
     color: 'white',
     width: '100%',
     opacity: 0,
+    height: 20,
+    maxWidth: 20,
   },
 });
 
@@ -246,6 +243,7 @@ const DrawCore = ({
     currentItem,
     itemIsSelected,
     viewShot,
+    doubleArrowTextInput,
   } = useDrawHook();
 
   const onCancelChangeWrapper = (arg: boolean) => {
@@ -303,13 +301,11 @@ const DrawCore = ({
 
   const showTextInput = useSharedValue(false); //TODO: remove
 
-  const inputEl = useRef<TextInput | null>(null);
-  const [showTextInputState, setShowTextInputState] = useState<Boolean>(false);
   const textFocusState = useCallback(() => {
-    setShowTextInputState(true);
+    //setShowTextInputState(true);
     console.log('textFocusState');
-    inputEl.current?.focus();
-  }, [setShowTextInputState]);
+    doubleArrowTextInput?.current?.focus();
+  }, [doubleArrowTextInput]);
 
   const textFocus = useCallback(() => {
     console.log('textFocus');
@@ -899,6 +895,7 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
+                  text: currentItem.value.text,
                   data: {
                     x1: x1 + translationX,
                     y1: y1 + translationY,
@@ -912,6 +909,7 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
+                  text: currentItem.value.text,
                   data: {
                     x1: x1,
                     y1: y1,
@@ -925,6 +923,7 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
+                  text: currentItem.value.text,
                   data: {
                     x1: x1 + translationX,
                     y1: y1 + translationY,
@@ -939,6 +938,7 @@ const DrawCore = ({
               type: currentItem.value.type,
               strokeWidth: currentItem.value.strokeWidth,
               color: currentItem.value.color,
+              text: currentItem.value.text,
               data: {
                 x1: startX,
                 y1: startY,
@@ -1123,6 +1123,7 @@ const DrawCore = ({
 
       strokeWidth.value = item.strokeWidth;
       color.value = item.color;
+      console.log('item', item);
       currentItem.value = item;
 
       deleteDoneItem(index);
@@ -1134,6 +1135,9 @@ const DrawCore = ({
       if (item.type === 'text') {
         setTextVal(item.text ?? '');
         textInputRef.current?.focus();
+      } else if (item.type === 'doubleArrows') {
+        //setTextVal(item.text ?? '');
+        //textInputRef.current?.focus();
       } else {
         textInputRef.current?.blur();
       }
@@ -1233,46 +1237,6 @@ const DrawCore = ({
   // do not remove keyboard will appear over the drawing frame and not shift it
   useAnimatedKeyboard();
 
-  const textInputContainerStyle = useAnimatedStyle(() => {
-    return {
-      position: 'absolute',
-      top: 0,
-      height: 50,
-      width: '100%',
-      display: 'flex',
-      opacity: showTextInput.value ? withTiming(1) : withTiming(0),
-    };
-  }, [showTextInput.value]);
-
-  const textInputStyle = useAnimatedStyle(() => {
-    console.log('********************************');
-    console.log('textInputStyle useAnimatedStyle');
-    console.log(
-      'color ',
-      currentItem.value?.color ? hslToRgb(currentItem.value?.color) : 'white'
-    );
-    console.log(
-      'height',
-      currentItem.value?.strokeWidth ? currentItem.value?.strokeWidth : 20
-    );
-    return {
-      color: currentItem.value?.color
-        ? hslToRgb(currentItem.value?.color)
-        : 'white',
-      height: currentItem.value?.strokeWidth
-        ? currentItem.value?.strokeWidth
-        : 20,
-      display:
-        showTextInput.value && drawState.drawingMode === 'text'
-          ? 'flex'
-          : 'none',
-      opacity:
-        showTextInput.value && drawState.drawingMode === 'text'
-          ? withTiming(1)
-          : withTiming(0),
-    };
-  }, [showTextInput.value, drawState.drawingMode]);
-
   const onEndEditingTextInput = useCallback(() => {
     console.log('onEndEditingTextInput');
     setShowTextInputState(false);
@@ -1315,68 +1279,62 @@ const DrawCore = ({
           });
         }}
       >
-        {showTextInputState ? (
-          <TextInput
-            ref={inputEl}
-            style={{ height: 20, width: 100, backgroundColor: 'yellow' }}
-            onEndEditing={onEndEditingTextInput}
-            onChangeText={onChangeText}
-          />
-        ) : null}
-        <PanGestureHandler onGestureEvent={onGestureEvent}>
-          <Animated.View style={imageSize || drawRegion}>
-            <View ref={drawContainer}>
-              {image ? (
-                imageSize && originalImageSize ? (
+        <KeyboardAvoidingView behavior="position" keyboardVerticalOffset={70}>
+          <PanGestureHandler onGestureEvent={onGestureEvent}>
+            <Animated.View style={imageSize || drawRegion}>
+              <View ref={drawContainer}>
+                {image ? (
+                  imageSize && originalImageSize ? (
+                    <ViewShot
+                      ref={viewShot}
+                      options={{
+                        format: 'jpg',
+                        quality: 1,
+                      }}
+                      style={imageSize}
+                    >
+                      <ImageBackground source={image} style={styles.bgImage}>
+                        <DrawPad
+                          currentItem={currentItem}
+                          doneItems={drawState.doneItems}
+                          onPressItem={onPressItem}
+                          onTextHeightChange={onTextHeightChange}
+                        />
+                      </ImageBackground>
+                    </ViewShot>
+                  ) : null
+                ) : drawRegion ? (
                   <ViewShot
                     ref={viewShot}
                     options={{
                       format: 'jpg',
                       quality: 1,
+                      ...drawRegion,
                     }}
-                    style={imageSize}
+                    style={drawRegion}
                   >
-                    <ImageBackground source={image} style={styles.bgImage}>
-                      <DrawPad
-                        currentItem={currentItem}
-                        doneItems={drawState.doneItems}
-                        onPressItem={onPressItem}
-                        onTextHeightChange={onTextHeightChange}
-                      />
-                    </ImageBackground>
+                    <DrawPad
+                      addBackground
+                      currentItem={currentItem}
+                      doneItems={drawState.doneItems}
+                      onPressItem={onPressItem}
+                      onTextHeightChange={onTextHeightChange}
+                    />
                   </ViewShot>
-                ) : null
-              ) : drawRegion ? (
-                <ViewShot
-                  ref={viewShot}
-                  options={{
-                    format: 'jpg',
-                    quality: 1,
-                    ...drawRegion,
-                  }}
-                  style={drawRegion}
-                >
-                  <DrawPad
-                    addBackground
-                    currentItem={currentItem}
-                    doneItems={drawState.doneItems}
-                    onPressItem={onPressItem}
-                    onTextHeightChange={onTextHeightChange}
-                  />
-                </ViewShot>
-              ) : null}
-            </View>
-          </Animated.View>
-        </PanGestureHandler>
+                ) : null}
+              </View>
+            </Animated.View>
+          </PanGestureHandler>
 
-        <TextInput
-          ref={textInputRef}
-          style={styles.textInput}
-          onEndEditing={textInputRef.current?.clear}
-          onChangeText={setTextVal}
-          value={textVal}
-          autoCorrect={false}
-        />
+          <TextInput
+            ref={textInputRef}
+            style={styles.textInput}
+            onEndEditing={textInputRef.current?.clear}
+            onChangeText={setTextVal}
+            value={textVal}
+            autoCorrect={false}
+          />
+        </KeyboardAvoidingView>
         {/*Platform.OS === 'ios' ? (
           <InputAccessoryView>
             <AnimatedTextInput

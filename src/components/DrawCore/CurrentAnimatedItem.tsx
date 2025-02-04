@@ -1,20 +1,16 @@
 import React from 'react';
 import Animated, {
-  Extrapolation,
   createAnimatedPropAdapter,
-  interpolate,
   processColor,
   runOnJS,
   useAnimatedProps,
   useAnimatedReaction,
 } from 'react-native-reanimated';
-import { Path, Ellipse, Rect, Line, G, Text, Circle } from 'react-native-svg';
-import type { DrawItem, hslColor, Point } from '../../types';
+import { Path, Ellipse, Rect, Line, G } from 'react-native-svg';
+import type { hslColor, Point } from '../../types';
 import { TextInput } from 'react-native';
 import useDrawHook from './useDrawHook';
-import { rotationHandlerName } from 'react-native-gesture-handler/lib/typescript/handlers/RotationGestureHandler';
-import { RotationGesture } from 'react-native-gesture-handler/lib/typescript/handlers/gestures/rotationGesture';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+
 //import { TextInput } from 'react-native-gesture-handler';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -356,7 +352,7 @@ export default function CurrentAnimatedItem() {
           x2: Number(coordinates.x2),
           y2: Number(coordinates.y2),
           first: true,
-          text: currentItem.value?.text,
+          //text: currentItem.value?.text,
         });
       }
 
@@ -396,7 +392,7 @@ export default function CurrentAnimatedItem() {
           x2: Number(coordinates.x2),
           y2: Number(coordinates.y2),
           first: false,
-          text: currentItem.value?.text,
+          //text: currentItem.value?.text,
         });
       }
 
@@ -590,8 +586,6 @@ export default function CurrentAnimatedItem() {
           style={{
             color: 'black',
             fontSize: 24,
-            borderWidth: 1,
-            borderColor: 'black',
             position: 'absolute',
           }}
         />

@@ -15,9 +15,7 @@ import Animated, {
   useAnimatedGestureHandler,
   useAnimatedKeyboard,
   useAnimatedReaction,
-  useAnimatedStyle,
   useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import {
   PanGestureHandler,
@@ -28,7 +26,6 @@ import type { DrawItem, DrawItemType, hslColor, Size } from '../../types';
 import DrawPad from './DrawPad';
 import ViewShot from 'react-native-view-shot';
 import useDrawHook from './useDrawHook';
-import { hslToRgb } from './CurrentAnimatedItem';
 
 const styles = StyleSheet.create({
   container: {
@@ -92,8 +89,6 @@ const pDistance = (
   var dy = y - yy;
   return Math.sqrt(dx * dx + dy * dy);
 };
-
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 const DEFAULT_TEXT = '';
 
@@ -895,7 +890,10 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
-                  text: currentItem.value.text,
+                  text:
+                    currentItem.value.type === 'doubleArrows'
+                      ? currentItem.value.text ?? ''
+                      : '',
                   data: {
                     x1: x1 + translationX,
                     y1: y1 + translationY,
@@ -909,7 +907,10 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
-                  text: currentItem.value.text,
+                  text:
+                    currentItem.value.type === 'doubleArrows'
+                      ? currentItem.value.text ?? ''
+                      : '',
                   data: {
                     x1: x1,
                     y1: y1,
@@ -923,7 +924,10 @@ const DrawCore = ({
                   type: currentItem.value.type,
                   strokeWidth: currentItem.value.strokeWidth,
                   color: currentItem.value.color,
-                  text: currentItem.value.text,
+                  text:
+                    currentItem.value.type === 'doubleArrows'
+                      ? currentItem.value.text ?? ''
+                      : '',
                   data: {
                     x1: x1 + translationX,
                     y1: y1 + translationY,
@@ -938,7 +942,10 @@ const DrawCore = ({
               type: currentItem.value.type,
               strokeWidth: currentItem.value.strokeWidth,
               color: currentItem.value.color,
-              text: currentItem.value.text,
+              text:
+                currentItem.value.type === 'doubleArrows'
+                  ? currentItem.value.text ?? ''
+                  : '',
               data: {
                 x1: startX,
                 y1: startY,
@@ -1098,7 +1105,7 @@ const DrawCore = ({
             data: currentItem.value.data,
             strokeWidth: sw,
             color: c,
-          };
+          } as DrawItem;
           break;
         case 'text':
           currentItem.value = {
@@ -1237,6 +1244,7 @@ const DrawCore = ({
   // do not remove keyboard will appear over the drawing frame and not shift it
   useAnimatedKeyboard();
 
+  /*
   const onEndEditingTextInput = useCallback(() => {
     console.log('onEndEditingTextInput');
     setShowTextInputState(false);
@@ -1265,6 +1273,7 @@ const DrawCore = ({
     },
     [currentItem]
   );
+  */
   return (
     <View style={styles.container}>
       <View

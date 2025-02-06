@@ -86,16 +86,20 @@ export default function CurrentAnimatedText({
           translateX:
             (currentItem.value?.type === 'text' &&
               (typeof currentItem.value.data.x === 'string'
-                ? parseFloat(currentItem.value.data.x)
-                : currentItem.value.data.x)) ||
+                ? parseFloat(currentItem.value.data.x) - 28
+                : currentItem.value.data.x
+                ? currentItem.value.data.x - 28
+                : 0)) ||
             0,
         },
         {
           translateY:
             (currentItem.value?.type === 'text' &&
               (typeof currentItem.value.data.y === 'string'
-                ? parseFloat(currentItem.value.data.y)
-                : currentItem.value.data.y)) ||
+                ? parseFloat(currentItem.value.data.y) - 12
+                : currentItem.value.data.y
+                ? currentItem.value.data.y - 12
+                : 0)) ||
             0,
         },
       ],

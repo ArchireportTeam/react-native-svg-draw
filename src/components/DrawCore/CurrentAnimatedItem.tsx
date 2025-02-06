@@ -151,13 +151,13 @@ const propAdapter = createAnimatedPropAdapter(
       Object.keys(props).includes('fill') &&
       (typeof props.fill === 'string' || typeof props.fill === 'number')
     ) {
-      props.fill = { type: 0, payload: processColor(props.fill) };
+      props.fill = { type: 0, payload: processColor(props.fill as string) };
     }
     if (
       Object.keys(props).includes('stroke') &&
       (typeof props.stroke === 'string' || typeof props.stroke === 'number')
     ) {
-      props.stroke = { type: 0, payload: processColor(props.stroke) };
+      props.stroke = { type: 0, payload: processColor(props.stroke as string) };
     }
   },
   ['fill', 'stroke']
@@ -188,7 +188,7 @@ export default function CurrentAnimatedItem() {
         rx: coordinates.rx,
         ry: coordinates.ry,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'ellipse'
@@ -213,7 +213,7 @@ export default function CurrentAnimatedItem() {
         x2: coordinates.x2,
         y2: coordinates.y2,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'singleHead'
@@ -239,7 +239,7 @@ export default function CurrentAnimatedItem() {
         x2: coordinates.x2,
         y2: coordinates.y2,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'doubleHead'
@@ -307,7 +307,6 @@ export default function CurrentAnimatedItem() {
     first: boolean;
   }) => {
     'worklet';
-    //console.log('*******************');
     const dist = distance(x1, y1, x2, y2);
     const textLength = getTextLength();
     const newDist = (!textLength ? dist : dist - textLength) / 2;
@@ -362,7 +361,7 @@ export default function CurrentAnimatedItem() {
         x2,
         y2,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'doubleArrows'
@@ -402,7 +401,7 @@ export default function CurrentAnimatedItem() {
         x2,
         y2,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'doubleArrows'
@@ -470,13 +469,14 @@ export default function CurrentAnimatedItem() {
       }
 
       return {
-        top: y - 10,
+        top: y - 25,
         left: x - getTextLength() / 2,
         fontSize: 10 + (currentItem.value?.strokeWidth ?? 0) * 2,
         color: currentItem.value?.color
           ? hslToRgb(currentItem.value?.color)
           : 'white',
         transform: [{ rotateZ: `${angle}deg` }],
+        //backgroundColor: 'red',
         width: getTextLength(),
       };
     },
@@ -496,7 +496,7 @@ export default function CurrentAnimatedItem() {
         width: coordinates.width,
         height: coordinates.height,
         fill: 'transparent',
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
         opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
         strokeWidth:
           currentItem.value?.type === 'rectangle'
@@ -519,10 +519,11 @@ export default function CurrentAnimatedItem() {
       );
       return {
         d: d,
+        //opacity: 1,
+        opacity: currentItem.value?.type === 'pen' ? 1 : 0,
+        //stroke: currentItem.value?.color || "black",
         strokeWidth:
           currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
-        stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'pen' ? 1 : 0,
         fill: 'transparent',
         markerStart: 'selection',
         markerEnd: 'selection',
@@ -552,15 +553,27 @@ export default function CurrentAnimatedItem() {
 
   return (
     <>
-      <AnimatedEllipse animatedProps={ellipseAnimatedProps} />
+      <AnimatedEllipse
+        animatedProps={ellipseAnimatedProps}
+        stroke={currentItem.value?.color || 'black'}
+      />
       <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine animatedProps={singleHeadAnimatedProps} />
+        <AnimatedLine
+          animatedProps={singleHeadAnimatedProps}
+          stroke={currentItem.value?.color || 'black'}
+        />
       </G>
       <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine animatedProps={doubleHeadAnimatedProps} />
+        <AnimatedLine
+          animatedProps={doubleHeadAnimatedProps}
+          stroke={currentItem.value?.color || 'black'}
+        />
       </G>
       <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsFirst} />
+        <AnimatedLine
+          animatedProps={doubleArrowsAnimatedPropsFirst}
+          stroke={currentItem.value?.color || 'black'}
+        />
 
         <AnimatedTextInput
           animatedProps={{
@@ -575,7 +588,6 @@ export default function CurrentAnimatedItem() {
           ref={doubleArrowTextInput}
           underlineColorAndroid={'transparent'}
           onChangeText={(text) => {
-            console.log('onChangeText', text);
             if (currentItem.value?.type === 'doubleArrows') {
               currentItem.value = {
                 ...currentItem.value,
@@ -590,11 +602,19 @@ export default function CurrentAnimatedItem() {
           }}
         />
 
-        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsLast} />
+        <AnimatedLine
+          animatedProps={doubleArrowsAnimatedPropsLast}
+          stroke={currentItem.value?.color || 'black'}
+        />
       </G>
-
-      <AnimatedRectangle animatedProps={rectangleAnimatedProps} />
-      <AnimatedPath animatedProps={penAnimatedProps} />
+      <AnimatedRectangle
+        animatedProps={rectangleAnimatedProps}
+        stroke={currentItem.value?.color || 'black'}
+      />
+      <AnimatedPath
+        animatedProps={penAnimatedProps}
+        stroke={currentItem.value?.color || 'black'}
+      />
     </>
   );
 }

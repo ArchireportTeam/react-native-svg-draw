@@ -265,7 +265,7 @@ export default function Item({
     case 'text':
       return (
         <G onPress={onPress}>
-          <Rect {...item.data} onPress={onPress} />
+          <Rect {...item.data} onPress={onPress} fill={'transparent'} />
           <ForeignObject
             x={item.data.x}
             y={item.data.y}

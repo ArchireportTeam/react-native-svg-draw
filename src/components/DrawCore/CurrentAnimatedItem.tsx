@@ -478,6 +478,7 @@ export default function CurrentAnimatedItem() {
         transform: [{ rotateZ: `${angle}deg` }],
         //backgroundColor: 'red',
         width: getTextLength(),
+        height: 50,
       };
     },
     null,

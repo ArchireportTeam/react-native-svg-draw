@@ -276,7 +276,7 @@ export default function Item({
               style={[
                 styles.textZone,
                 {
-                  width: item.data.width,
+                  width: item.data.width as number,
                 },
               ]}
             >

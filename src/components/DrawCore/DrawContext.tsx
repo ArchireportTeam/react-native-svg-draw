@@ -13,6 +13,9 @@ export const DrawContext = createContext<{
   itemIsSelected?: SharedValue<boolean>;
   viewShot?: RefObject<ViewShot>;
   doubleArrowTextInput?: RefObject<TextInput>;
+  doSnapshot: () => void;
+  snapShotRequested: boolean;
+  setSnapShotRequested: React.Dispatch<React.SetStateAction<boolean>>;
 }>({
   drawState: {
     doneItems: [],
@@ -21,4 +24,7 @@ export const DrawContext = createContext<{
     cancelEnabled: false,
   },
   dispatchDrawStates: () => true,
+  doSnapshot: () => {},
+  snapShotRequested: false,
+  setSnapShotRequested: () => {},
 });

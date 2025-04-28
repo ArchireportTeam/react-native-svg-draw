@@ -49,7 +49,7 @@ import { DrawWithOptions } from 'react-native-svg-draw';
 import LinearGradient from 'react-native-linear-gradient';
 
 // ...
-  <DrawWithOptions linearGradient={LinearGradient} />
+<DrawWithOptions linearGradient={LinearGradient} />;
 ```
 
 ### Expo
@@ -59,7 +59,7 @@ import { DrawWithOptions } from 'react-native-svg-draw';
 import { LinearGradient } from 'expo-linear-gradient';
 
 // ...
-  <DrawWithOptions linearGradient={LinearGradient} />
+<DrawWithOptions linearGradient={LinearGradient} />;
 ```
 
 ---
@@ -74,14 +74,14 @@ Fast and easy way to use the lib.
 Example :
 
 ```jsx
-  <DrawWithOptions
-    linearGradient={LinearGradient}
-    image={require('./pexels-sebastian-palomino-2847766.jpg')}
-    close={() => true}
-    takeSnapshot={(snap) => {
-      snap.then((uri) => console.log('snapShot uri:', uri));
-    }}
-  />
+<DrawWithOptions
+  linearGradient={LinearGradient}
+  image={require('./pexels-sebastian-palomino-2847766.jpg')}
+  close={() => true}
+  actionWithSnapShotUri={async (uri) => {
+    console.log('snapShot uri:', uri);
+  }}
+/>
 ```
 
 ### Use your own "DrawWithOptions" component
@@ -90,13 +90,11 @@ You can create your own "DrawWithOptions" component and customize the ui.
 
 You will need to use `DrawCore` component wrapped in `DrawProvider` context.
 
-
 ```jsx
 <DrawProvider>
-  <DrawCore image={require('./pexels-sebastian-palomino-2847766.jpg')}/>
+  <DrawCore image={require('./pexels-sebastian-palomino-2847766.jpg')} />
 </DrawProvider>
 ```
-
 
 Then you can use the hook "useDrawHook" inside your components to interact with the context. This hook expose a lot of functions and objects that can be used to interact with the `DrawCore`.
 
@@ -113,17 +111,17 @@ Then you can use the hook "useDrawHook" inside your components to interact with 
 
 #### useDrawHook
 
-| Name                  | Type                   | Description                                                                                               |
-| --------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| `strokeWidth`         | shared value(number)   | Object from react-native-reanimated, get and set value => strokeWidth.value                               |
-| `color`               | shared value(hslColor) | Object from react-native-reanimated, get and set value => color.value                                     |
-| `onColorStrokeChange` | function               | Function use when changing color or strokeWidth is done to memorize action for undo                       |
-| `drawState`           | object                 | Get the selected `drawingMode` : 'singleHead','doubleHead','rectangle','ellipse','text','pen', `cancelEnabled`  is true when last action can be canceled,  `doneItems` contains all previous draw items and `screenStates` helps to go back in time (cancel pops last state)            |
-| `dispatchDrawStates`  | function               | Can be used to update `drawingMode`            |
-| `itemIsSelected`      | shared value(boolean)  | Object from react-native-reanimated Indicate if an item is selected, to get value => itemIsSelected.value |
-| `cancelLastAction`    | function               | Call this function when user press your undo button                                                       |
-| `takeSnapshot`        | function               | This async function will return the uri of your drawing                                                   |
-| `deleteSelectedItem`  | function               | Call this function when you want to delete the selected item                                              |
+| Name                  | Type                   | Description                                                                                                                                                                                                                                                                |
+| --------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `strokeWidth`         | shared value(number)   | Object from react-native-reanimated, get and set value => strokeWidth.value                                                                                                                                                                                                |
+| `color`               | shared value(hslColor) | Object from react-native-reanimated, get and set value => color.value                                                                                                                                                                                                      |
+| `onColorStrokeChange` | function               | Function use when changing color or strokeWidth is done to memorize action for undo                                                                                                                                                                                        |
+| `drawState`           | object                 | Get the selected `drawingMode` : 'singleHead','doubleHead','rectangle','ellipse','text','pen', `cancelEnabled` is true when last action can be canceled, `doneItems` contains all previous draw items and `screenStates` helps to go back in time (cancel pops last state) |
+| `dispatchDrawStates`  | function               | Can be used to update `drawingMode`                                                                                                                                                                                                                                        |
+| `itemIsSelected`      | shared value(boolean)  | Object from react-native-reanimated Indicate if an item is selected, to get value => itemIsSelected.value                                                                                                                                                                  |
+| `cancelLastAction`    | function               | Call this function when user press your undo button                                                                                                                                                                                                                        |
+| `takeSnapshot`        | function               | This function will trigger the snapshot                                                                                                                                                                                                                                    |
+| `deleteSelectedItem`  | function               | Call this function when you want to delete the selected item                                                                                                                                                                                                               |
 
 ### Recommendation
 
@@ -137,13 +135,13 @@ Component with header and footer, based on DrawCore
 
 #### Properties
 
-| Name             | Type            | Description                                                                              |
-| ---------------- | --------------- | ---------------------------------------------------------------------------------------- |
-| `close`          | function        | (optional) called when cross is pressed                                                  |
-| `takeSnapshot`   | function        | (optional) called when send button (at the top right) is pressed                         |
-| `linearGradient` | React Component | implementation used for linear gradient (differs between expo and bare react native app) |
-| `image`          | image           | (optional) background picture                                                            |
-| `backgroundColor` | string | (optional) background color of the draw zone |
+| Name              | Type            | Description                                                                              |
+| ----------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `close`           | function        | (optional) called when cross is pressed                                                  |
+| `takeSnapshot`    | function        | (optional) called when send button (at the top right) is pressed                         |
+| `linearGradient`  | React Component | implementation used for linear gradient (differs between expo and bare react native app) |
+| `image`           | image           | (optional) background picture                                                            |
+| `backgroundColor` | string          | (optional) background color of the draw zone                                             |
 
 ### DrawCore
 
@@ -151,10 +149,11 @@ Component where the user can draw
 
 #### Properties
 
-| Name              | Type   | Description                                  |
-| ----------------- | ------ | -------------------------------------------- |
-| `image`           | image  | (optional) background picture                |
-| `backgroundColor` | string | (optional) background color of the draw zone |
+| Name                    | Type     | Description                                                                              |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `image`                 | image    | (optional) background picture                                                            |
+| `backgroundColor`       | string   | (optional) background color of the draw zone                                             |
+| `actionWithSnapShotUri` | function | (optional) a function receving uri of generated image and doing something of your choise |
 
 ## Contributing
 

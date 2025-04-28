@@ -1,5 +1,3 @@
-import React from 'react';
-import { View } from 'react-native';
 import {
   ForeignObjectProps,
   EllipseProps,
@@ -34,11 +32,15 @@ export type DrawItem = (
 export type DrawItemType = DrawItem['type'];
 
 export type DrawCoreProps = {
+  takeSnapshotAction: () => void;
+};
+/*
+export type DrawCoreProps = {
   drawingContainer: React.Ref<View>;
   deleteSelectedItem: () => void;
   cancelLastAction: () => void;
   takeSnapshot: () => Promise<string | undefined>;
-};
+};*/
 
 export type DrawState = {
   doneItems: DrawItem[];

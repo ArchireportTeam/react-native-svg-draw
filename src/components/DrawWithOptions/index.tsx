@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   View,
@@ -76,7 +76,7 @@ type DrawWithOptionsProps = {
   linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
   image?: ImageRequireSource | ImageURISource;
   close?: () => void;
-  takeSnapshot?: (snap: Promise<string | undefined>) => void;
+  actionWithSnapShotUri?: (uri: string) => Promise<void>;
   backgroundColor?: string;
 };
 
@@ -84,16 +84,16 @@ function DrawWithOptionsCore({
   linearGradient,
   image,
   close,
-  takeSnapshot,
   backgroundColor,
+  actionWithSnapShotUri,
 }: DrawWithOptionsProps) {
   const {
     itemIsSelected,
     cancelLastAction,
-    takeSnapshot: takeSnapshotAction,
     deleteSelectedItem,
     dispatchDrawStates,
     drawState,
+    doSnapshot,
   } = useDrawHook();
 
   const [showToolbar, setShowToolbar] = useState(true);
@@ -121,11 +121,6 @@ function DrawWithOptionsCore({
     };
   }, []);
 
-  const takeSnapshotAndGetUri = useCallback(async () => {
-    if (takeSnapshot) {
-      takeSnapshot(takeSnapshotAction());
-    }
-  }, [takeSnapshot, takeSnapshotAction]);
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
@@ -266,7 +261,7 @@ function DrawWithOptionsCore({
         </View>
 
         <View style={styles.actionButton}>
-          <Pressable onPress={takeSnapshotAndGetUri}>
+          <Pressable onPress={doSnapshot}>
             <SendSvg height={20} width={20} fill="#ffffff" />
           </Pressable>
         </View>
@@ -277,7 +272,11 @@ function DrawWithOptionsCore({
           flex: 1,
         }}
       >
-        <DrawCore image={image} backgroundColor={backgroundColor} />
+        <DrawCore
+          image={image}
+          backgroundColor={backgroundColor}
+          actionWithSnapShotUri={actionWithSnapShotUri}
+        />
       </View>
 
       <Sliders linearGradient={linearGradient} />

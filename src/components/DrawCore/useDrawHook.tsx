@@ -11,15 +11,17 @@ const useDrawHook = () => {
     itemIsSelected,
     viewShot,
     doubleArrowTextInput,
+    doSnapshot,
+    snapShotRequested,
+    setSnapShotRequested,
   } = useContext(DrawContext);
 
-  const takeSnapshot = useCallback(async () => {
-    if (currentItem?.value) {
-      dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: currentItem.value });
-      currentItem.value = null;
+  const captureSnapshot = useCallback(async () => {
+    if (viewShot) {
+      return await viewShot.current?.capture?.();
     }
-    return viewShot!.current?.capture?.();
-  }, [currentItem, dispatchDrawStates, viewShot]);
+    return null;
+  }, [viewShot]);
 
   const cancelLastAction = useCallback(() => {
     itemIsSelected!.value = false;
@@ -62,10 +64,13 @@ const useDrawHook = () => {
     onColorStrokeChange,
     itemIsSelected: itemIsSelected!,
     cancelLastAction,
-    takeSnapshot: takeSnapshot!,
+    captureSnapshot: captureSnapshot!,
     viewShot: viewShot!,
     deleteSelectedItem,
     doubleArrowTextInput,
+    snapShotRequested,
+    doSnapshot,
+    setSnapShotRequested,
   };
 };
 

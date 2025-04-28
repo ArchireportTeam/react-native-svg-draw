@@ -226,9 +226,11 @@ const onTextHeightUpdate = (
 const DrawCore = ({
   image,
   backgroundColor,
+  actionWithSnapShotUri,
 }: {
   image?: ImageRequireSource | ImageURISource;
   backgroundColor?: string;
+  actionWithSnapShotUri?: (uri: string) => Promise<void>;
 }) => {
   const {
     drawState,
@@ -239,26 +241,53 @@ const DrawCore = ({
     itemIsSelected,
     viewShot,
     doubleArrowTextInput,
+    captureSnapshot,
+    snapShotRequested,
+    setSnapShotRequested,
   } = useDrawHook();
+
+  const [drawRegion, setDrawRegion] = useState<Size | null>(null);
+  const [imageSize, setImageSize] = useState<Size | null>(null);
+  const [originalImageSize, setOriginalImageSize] = useState<Size | null>(null);
+
+  useEffect(() => {
+    if (snapShotRequested) {
+      setSnapShotRequested(false);
+      setNewLayoutRequested(true);
+      if (
+        imageSize?.height &&
+        originalImageSize?.height &&
+        originalImageSize?.width &&
+        image
+      ) {
+        setOpacity(0);
+        setRatioImage(originalImageSize.height / imageSize?.height);
+        setImageSize(originalImageSize);
+      } else if (!image && drawRegion?.height) {
+        const width = 1500;
+        const height = width / 1.3333333;
+        setOpacity(0);
+        setRatioImage(height / drawRegion.height);
+        setImageSize({ width, height });
+      }
+    }
+  }, [
+    snapShotRequested,
+    drawRegion?.height,
+    image,
+    imageSize?.height,
+    originalImageSize,
+    setSnapShotRequested,
+  ]);
 
   const onCancelChangeWrapper = (arg: boolean) => {
     dispatchDrawStates({ type: 'SET_CANCEL_ENABLED', cancelEnabled: arg });
   };
 
   const mode = useSharedValue<DrawItemType>('pen');
-
-  const [drawRegion, setDrawRegion] = useState<Size | null>(null);
-
-  const [originalImageSize, setOriginalImageSize] = useState<Size | null>(null);
-
-  const [imageSize, setImageSize] = useState<Size | null>(null);
-
   const drawContainer = useRef<View>(null);
-
   const [textVal, setTextVal] = useState<string>('');
-
   const initialItem = useSharedValue<DrawItem | null>(null);
-
   const textBaseHeight = useSharedValue<number | null>(null);
 
   const addDoneItem = useCallback(
@@ -297,19 +326,15 @@ const DrawCore = ({
   const showTextInput = useSharedValue(false); //TODO: remove
 
   const textFocusState = useCallback(() => {
-    //setShowTextInputState(true);
-    console.log('textFocusState');
     doubleArrowTextInput?.current?.focus();
   }, [doubleArrowTextInput]);
 
   const textFocus = useCallback(() => {
-    console.log('textFocus');
     textInputRef.current?.focus();
   }, []);
 
   useEffect(() => {
     if (currentItem.value?.type === 'text') {
-      console.log('use effect text');
       showTextInput.value = true;
       textFocus();
       currentItem.value = {
@@ -330,10 +355,7 @@ const DrawCore = ({
       ctx.startX = startX;
       ctx.startY = startY;
       ctx.newlyCreated = false;
-      console.log('**********************************');
-      console.log('onGestureEvent');
-      //panPosition.value = withTiming(RIGHT_PANE_WIDTH);
-      console.log('onStart', currentItem.value?.type);
+
       initialItem.value = currentItem.value;
       switch (currentItem.value?.type) {
         case 'ellipse':
@@ -511,8 +533,7 @@ const DrawCore = ({
             typeof currentItem.value.data.height === 'string'
               ? parseFloat(currentItem.value.data.height)
               : currentItem.value.data.height || 0;
-          console.log(heightText);
-          console.log(widthText);
+
           if (
             startX <= xText + THRESHOLD &&
             startX >= xText - THRESHOLD &&
@@ -538,10 +559,8 @@ const DrawCore = ({
               (heightText < 0 && startY < yText && startY > yText + heightText))
           ) {
             ctx.zone = 'CENTER';
-            console.log('on active center');
           } else {
             ctx.zone = 'OUT';
-            console.log('on active out');
             initialItem.value = null;
 
             ctx.newlyCreated = true;
@@ -581,8 +600,6 @@ const DrawCore = ({
           ctx.zone = 'OUT';
           initialItem.value = null;
           if (drawState.drawingMode === 'text') {
-            /* NEW GEOFF */
-            console.log('on active out');
             ctx.newlyCreated = true;
 
             runOnJS(setTextVal)('');
@@ -609,7 +626,6 @@ const DrawCore = ({
     ) => {
       const { startX, startY, zone, newlyCreated } = ctx;
       if (zone === 'OUT' && newlyCreated === false && mode.value !== 'text') {
-        console.log('on active out');
         ctx.newlyCreated = true;
         /*
         if (mode.value === 'text') {
@@ -956,7 +972,6 @@ const DrawCore = ({
           }
           break;
         case 'text':
-          console.log('on active text');
           if (initialItem.value?.type === currentItem.value.type) {
             const xText =
               typeof initialItem.value?.data.x === 'string'
@@ -1064,7 +1079,6 @@ const DrawCore = ({
 
     const sudDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
       // avoid events triggered by InputAccessoryView
-      console.log('keyboardDidShow dc');
       if (event.endCoordinates.height > 100) {
         showTextInput.value = true;
       }
@@ -1123,14 +1137,11 @@ const DrawCore = ({
 
   const onPressItem = useCallback(
     (item: DrawItem, index: number) => () => {
-      console.log('onPressItem');
-      itemIsSelected.value = true;
-
       const previousItem = currentItem.value;
 
+      itemIsSelected.value = true;
       strokeWidth.value = item.strokeWidth;
       color.value = item.color;
-      console.log('item', item);
       currentItem.value = item;
 
       deleteDoneItem(index);
@@ -1201,9 +1212,8 @@ const DrawCore = ({
 
   const calculateSizes = useCallback(
     (imageWidth: number, imageHeight: number) => {
+      setOriginalImageSize({ width: imageWidth, height: imageHeight });
       if (drawRegion) {
-        setOriginalImageSize({ width: imageWidth, height: imageHeight });
-
         const ratioImageHeight =
           Math.round(((imageHeight * drawRegion.width) / imageWidth) * 100) /
           100;
@@ -1244,36 +1254,21 @@ const DrawCore = ({
   // do not remove keyboard will appear over the drawing frame and not shift it
   useAnimatedKeyboard();
 
-  /*
-  const onEndEditingTextInput = useCallback(() => {
-    console.log('onEndEditingTextInput');
-    setShowTextInputState(false);
-    if (currentItem.value && currentItem.value.type === 'doubleArrows') {
-      console.log(currentItem.value.text);
-      addScreenStates(currentItem.value);
-    }
-  }, [currentItem, addScreenStates]);
+  const [newLayoutRequested, setNewLayoutRequested] = useState(false);
 
-  const onChangeText = useCallback(
-    (value: string) => {
-      if (
-        value &&
-        currentItem.value &&
-        currentItem.value.type === 'doubleArrows'
-      ) {
-        console.log('******************');
-        console.log(value);
-        console.log(currentItem.value);
-
-        currentItem.value = {
-          ...currentItem.value,
-          text: value,
-        };
+  const onLayout = useCallback(async () => {
+    if (newLayoutRequested) {
+      setNewLayoutRequested(false);
+      const uri = await captureSnapshot();
+      if (uri && typeof actionWithSnapShotUri === 'function') {
+        await actionWithSnapShotUri(uri);
       }
-    },
-    [currentItem]
-  );
-  */
+    }
+  }, [actionWithSnapShotUri, newLayoutRequested, captureSnapshot]);
+
+  const [ratioImage, setRatioImage] = useState<number>(1);
+  const [opacity, setOpacity] = useState<number>(1);
+
   return (
     <View style={styles.container}>
       <View
@@ -1290,7 +1285,10 @@ const DrawCore = ({
       >
         <KeyboardAvoidingView behavior="position" keyboardVerticalOffset={70}>
           <PanGestureHandler onGestureEvent={onGestureEvent}>
-            <Animated.View style={imageSize || drawRegion}>
+            <Animated.View
+              style={{ ...(imageSize || drawRegion), opacity: opacity }}
+              onLayout={onLayout}
+            >
               <View ref={drawContainer}>
                 {image ? (
                   imageSize && originalImageSize ? (
@@ -1308,6 +1306,7 @@ const DrawCore = ({
                           doneItems={drawState.doneItems}
                           onPressItem={onPressItem}
                           onTextHeightChange={onTextHeightChange}
+                          ratioImage={ratioImage}
                         />
                       </ImageBackground>
                     </ViewShot>
@@ -1318,9 +1317,9 @@ const DrawCore = ({
                     options={{
                       format: 'jpg',
                       quality: 1,
-                      ...drawRegion,
+                      ...(imageSize || drawRegion),
                     }}
-                    style={drawRegion}
+                    style={imageSize || drawRegion}
                   >
                     <DrawPad
                       addBackground
@@ -1328,6 +1327,7 @@ const DrawCore = ({
                       doneItems={drawState.doneItems}
                       onPressItem={onPressItem}
                       onTextHeightChange={onTextHeightChange}
+                      ratioImage={ratioImage}
                     />
                   </ViewShot>
                 ) : null}

@@ -1,5 +1,12 @@
 import { DrawContext } from './DrawContext';
-import React, { ReactElement, useMemo, useReducer, useRef } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import type { Action, DrawItem, DrawState, hslColor } from '../../types';
 import { useSharedValue } from 'react-native-reanimated';
 import type ViewShot from 'react-native-view-shot';
@@ -92,10 +99,19 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
   const viewShot = useRef<ViewShot>(null);
   const doubleArrowTextInput = useRef<TextInput>(null);
 
+  const [snapShotRequested, setSnapShotRequested] = useState(false);
+
   const [drawState, dispatchDrawStates] = useReducer(
     reducerDrawStates,
     initialState
   );
+  const doSnapshot = useCallback(() => {
+    if (currentItem?.value) {
+      dispatchDrawStates({ type: 'ADD_DONE_ITEM', item: currentItem.value });
+      currentItem.value = null;
+    }
+    setSnapShotRequested(true);
+  }, [currentItem, dispatchDrawStates]);
 
   const contextValue = useMemo(
     () => ({
@@ -107,6 +123,9 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       itemIsSelected,
       viewShot,
       doubleArrowTextInput,
+      doSnapshot,
+      snapShotRequested,
+      setSnapShotRequested,
     }),
     [
       drawState,
@@ -117,6 +136,9 @@ const DrawProvider = ({ children }: { children: ReactElement }) => {
       itemIsSelected,
       viewShot,
       doubleArrowTextInput,
+      doSnapshot,
+      snapShotRequested,
+      setSnapShotRequested,
     ]
   );
 

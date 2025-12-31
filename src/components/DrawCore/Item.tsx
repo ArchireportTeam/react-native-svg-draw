@@ -263,38 +263,23 @@ export default function Item({
         />
       );
     case 'text':
+      //console.log('Rendering text item:', JSON.stringify(item, null, 2));
       return (
-        <G onPress={onPress}>
-          <Rect {...item.data} onPress={onPress} fill={'transparent'} />
-          <ForeignObject
-            x={item.data.x}
-            y={item.data.y}
-            width={item.data.width}
-            key={item.text}
+        <G onPress={onPress} fill={'red'}>
+          <G
+            x={String(item.data.x)}
+            y={String(Number(item.data.y ?? 0) + 2 * item.strokeWidth + 13)}
           >
-            <View
-              style={[
-                styles.textZone,
-                {
-                  width: item.data.width as number,
-                },
-              ]}
+            <SvgText
+              stroke={item.color}
+              fill={item.color}
+              textAnchor="start"
+              fontSize={2 * item.strokeWidth + 10}
+              onPress={onPress}
             >
-              <View style={styles.textContainer}>
-                <Text
-                  style={[
-                    styles.text,
-                    {
-                      fontSize: 10 + item.strokeWidth * 2,
-                      color: item.color ? hslToRgb(item.color) : 'white',
-                    },
-                  ]}
-                >
-                  {item.text}
-                </Text>
-              </View>
-            </View>
-          </ForeignObject>
+              {item.text}
+            </SvgText>
+          </G>
         </G>
       );
 

@@ -12,15 +12,11 @@ import {
 } from 'react-native';
 import Animated, {
   runOnJS,
-  useAnimatedGestureHandler,
   useAnimatedKeyboard,
   useAnimatedReaction,
   useSharedValue,
 } from 'react-native-reanimated';
-import {
-  PanGestureHandler,
-  PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import type { DrawItem, DrawItemType, hslColor, Size } from '../../types';
 import DrawPad from './DrawPad';
@@ -289,6 +285,11 @@ const DrawCore = ({
   const [textVal, setTextVal] = useState<string>('');
   const initialItem = useSharedValue<DrawItem | null>(null);
   const textBaseHeight = useSharedValue<number | null>(null);
+  const gestureContext = useSharedValue<Context>({
+    startX: 0,
+    startY: 0,
+    newlyCreated: false,
+  });
 
   const addDoneItem = useCallback(
     (item: DrawItem) => {
@@ -335,6 +336,7 @@ const DrawCore = ({
 
   useEffect(() => {
     if (currentItem.value?.type === 'text') {
+      console.log('Updating text value:');
       showTextInput.value = true;
       textFocus();
       currentItem.value = {
@@ -347,14 +349,10 @@ const DrawCore = ({
     }
   }, [currentItem, showTextInput, textFocus, textVal]);
 
-  const onGestureEvent = useAnimatedGestureHandler<
-    PanGestureHandlerGestureEvent,
-    Context
-  >({
-    onStart: ({ x: startX, y: startY }, ctx) => {
-      ctx.startX = startX;
-      ctx.startY = startY;
-      ctx.newlyCreated = false;
+  const panGesture = Gesture.Pan()
+    .onStart((event) => {
+      const { x: startX, y: startY } = event;
+      gestureContext.value = { startX, startY, newlyCreated: false };
 
       initialItem.value = currentItem.value;
       switch (currentItem.value?.type) {
@@ -382,37 +380,37 @@ const DrawCore = ({
             startY <= cy - ry + THRESHOLD &&
             startY >= cy - ry - THRESHOLD
           ) {
-            ctx.zone = 'TOP';
+            gestureContext.value.zone = 'TOP';
           } else if (
             startX <= cx + THRESHOLD &&
             startX >= cx - THRESHOLD &&
             startY <= cy + ry + THRESHOLD &&
             startY >= cy + ry - THRESHOLD
           ) {
-            ctx.zone = 'BOTTOM';
+            gestureContext.value.zone = 'BOTTOM';
           } else if (
             startY <= cy + THRESHOLD &&
             startY >= cy - THRESHOLD &&
             startX <= cx - rx + THRESHOLD &&
             startX >= cx - rx - THRESHOLD
           ) {
-            ctx.zone = 'LEFT';
+            gestureContext.value.zone = 'LEFT';
           } else if (
             startY <= cy + THRESHOLD &&
             startY >= cy - THRESHOLD &&
             startX <= cx + rx + THRESHOLD &&
             startX >= cx + rx - THRESHOLD
           ) {
-            ctx.zone = 'RIGHT';
+            gestureContext.value.zone = 'RIGHT';
           } else if (
             ((rx > 0 && startX > cx - rx && startX < cx + rx) ||
               (rx < 0 && startX < cx - rx && startX > cx + rx)) &&
             ((ry > 0 && startY > cy - ry && startY < cy + ry) ||
               (ry < 0 && startY < cy - ry && startY > cy + ry))
           ) {
-            ctx.zone = 'CENTER';
+            gestureContext.value.zone = 'CENTER';
           } else {
-            ctx.zone = 'OUT';
+            gestureContext.value.zone = 'OUT';
             initialItem.value = null;
           }
 
@@ -437,24 +435,24 @@ const DrawCore = ({
 
           if (startX <= x + THRESHOLD && startX >= x - THRESHOLD) {
             if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-              ctx.zone = 'TOP_LEFT';
+              gestureContext.value.zone = 'TOP_LEFT';
             } else if (
               startY <= y + height + THRESHOLD &&
               startY >= y + height - THRESHOLD
             ) {
-              ctx.zone = 'BOTTOM_LEFT';
+              gestureContext.value.zone = 'BOTTOM_LEFT';
             }
           } else if (
             startX <= x + width + THRESHOLD &&
             startX >= x + width - THRESHOLD
           ) {
             if (startY <= y + THRESHOLD && startY >= y - THRESHOLD) {
-              ctx.zone = 'TOP_RIGHT';
+              gestureContext.value.zone = 'TOP_RIGHT';
             } else if (
               startY <= y + height + THRESHOLD &&
               startY >= y + height - THRESHOLD
             ) {
-              ctx.zone = 'BOTTOM_RIGHT';
+              gestureContext.value.zone = 'BOTTOM_RIGHT';
             }
           } else if (
             ((width > 0 && startX > x && startX < x + width) ||
@@ -462,9 +460,9 @@ const DrawCore = ({
             ((height > 0 && startY > y && startY < y + height) ||
               (height < 0 && startY < y && startY > y + height))
           ) {
-            ctx.zone = 'CENTER';
+            gestureContext.value.zone = 'CENTER';
           } else {
-            ctx.zone = 'OUT';
+            gestureContext.value.zone = 'OUT';
             initialItem.value = null;
           }
 
@@ -495,23 +493,23 @@ const DrawCore = ({
             startY <= y1 + THRESHOLD &&
             startY >= y1 - THRESHOLD
           ) {
-            ctx.zone = 'TOP';
+            gestureContext.value.zone = 'TOP';
           } else if (
             startX <= x2 + THRESHOLD &&
             startX >= x2 - THRESHOLD &&
             startY - THRESHOLD <= y2 + THRESHOLD &&
             startY + THRESHOLD >= y2 - THRESHOLD
           ) {
-            ctx.zone = 'BOTTOM';
+            gestureContext.value.zone = 'BOTTOM';
           } else if (
             pDistance({ x: startX, y: startY }, { x1, x2, y1, y2 }) <=
               THRESHOLD &&
             ((startX > x1 && startX < x2) || (startX < x1 && startX > x2)) &&
             ((startY > y1 && startY < y2) || (startY < y1 && startY > y2))
           ) {
-            ctx.zone = 'CENTER';
+            gestureContext.value.zone = 'CENTER';
           } else {
-            ctx.zone = 'OUT';
+            gestureContext.value.zone = 'OUT';
             initialItem.value = null;
           }
 
@@ -540,14 +538,14 @@ const DrawCore = ({
             startY <= yText + heightText / 2 + THRESHOLD &&
             startY >= yText + heightText / 2 - THRESHOLD
           ) {
-            ctx.zone = 'LEFT';
+            gestureContext.value.zone = 'LEFT';
           } else if (
             startX <= xText + widthText + THRESHOLD &&
             startX >= xText + widthText - THRESHOLD &&
             startY <= yText + heightText / 2 + THRESHOLD &&
             startY >= yText + heightText / 2 - THRESHOLD
           ) {
-            ctx.zone = 'RIGHT';
+            gestureContext.value.zone = 'RIGHT';
           } else if (
             ((widthText > 0 && startX > xText && startX < xText + widthText) ||
               (widthText < 0 &&
@@ -558,12 +556,12 @@ const DrawCore = ({
               startY < yText + heightText) ||
               (heightText < 0 && startY < yText && startY > yText + heightText))
           ) {
-            ctx.zone = 'CENTER';
+            gestureContext.value.zone = 'CENTER';
           } else {
-            ctx.zone = 'OUT';
+            gestureContext.value.zone = 'OUT';
             initialItem.value = null;
 
-            ctx.newlyCreated = true;
+            gestureContext.value.newlyCreated = true;
             runOnJS(setTextVal)('');
             drawNewItem(
               mode,
@@ -590,17 +588,17 @@ const DrawCore = ({
                 startY >= p.y - THRESHOLD
             )
           ) {
-            ctx.zone = 'CENTER';
+            gestureContext.value.zone = 'CENTER';
           } else {
-            ctx.zone = 'OUT';
+            gestureContext.value.zone = 'OUT';
             initialItem.value = null;
           }
           break;
         default:
-          ctx.zone = 'OUT';
+          gestureContext.value.zone = 'OUT';
           initialItem.value = null;
           if (drawState.drawingMode === 'text') {
-            ctx.newlyCreated = true;
+            gestureContext.value.newlyCreated = true;
 
             runOnJS(setTextVal)('');
 
@@ -619,14 +617,12 @@ const DrawCore = ({
           }
           break;
       }
-    },
-    onActive: (
-      { x: currentX, y: currentY, translationX, translationY },
-      ctx
-    ) => {
-      const { startX, startY, zone, newlyCreated } = ctx;
+    })
+    .onUpdate((event) => {
+      const { x: currentX, y: currentY, translationX, translationY } = event;
+      const { startX, startY, zone, newlyCreated } = gestureContext.value;
       if (zone === 'OUT' && newlyCreated === false && mode.value !== 'text') {
-        ctx.newlyCreated = true;
+        gestureContext.value.newlyCreated = true;
         /*
         if (mode.value === 'text') {
           runOnJS(setTextVal)('');
@@ -1049,8 +1045,8 @@ const DrawCore = ({
             };
           }
       }
-    },
-    onEnd: (_event) => {
+    })
+    .onEnd(() => {
       if (currentItem.value?.type === 'doubleArrows') {
         runOnJS(textFocusState)();
       }
@@ -1069,8 +1065,7 @@ const DrawCore = ({
         };
       }
       runOnJS(addScreenStates)(currentItem.value);
-    },
-  });
+    });
 
   useEffect(() => {
     const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
@@ -1284,7 +1279,7 @@ const DrawCore = ({
         }}
       >
         <KeyboardAvoidingView behavior="position" keyboardVerticalOffset={70}>
-          <PanGestureHandler onGestureEvent={onGestureEvent}>
+          <GestureDetector gesture={panGesture}>
             <Animated.View
               style={{ ...(imageSize || drawRegion), opacity: opacity }}
               onLayout={onLayout}
@@ -1333,7 +1328,7 @@ const DrawCore = ({
                 ) : null}
               </View>
             </Animated.View>
-          </PanGestureHandler>
+          </GestureDetector>
 
           <TextInput
             ref={textInputRef}

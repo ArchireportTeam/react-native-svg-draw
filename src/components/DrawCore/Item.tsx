@@ -1,31 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import {
   G,
   Line,
   Ellipse,
   Rect,
   Path,
-  ForeignObject,
   Text as SvgText,
 } from 'react-native-svg';
 import type { DrawItem } from '../../types';
-import { hslToRgb, pointsToPath } from './CurrentAnimatedItem';
-
-const styles = StyleSheet.create({
-  textZone: {
-    paddingHorizontal: 10,
-  },
-  textContainer: {
-    //backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    //borderRadius: 10,
-    paddingVertical: 13,
-    paddingHorizontal: 18,
-  },
-  text: {
-    color: 'white',
-  },
-});
+import { pointsToPath } from './CurrentAnimatedItem';
 
 export const distance = (x1: number, y1: number, x2: number, y2: number) => {
   return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));

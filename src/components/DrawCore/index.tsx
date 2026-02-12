@@ -248,8 +248,6 @@ const DrawCore = ({
 
   useEffect(() => {
     if (snapShotRequested) {
-      setSnapShotRequested(false);
-      setNewLayoutRequested(true);
       if (
         imageSize?.height &&
         originalImageSize?.height &&
@@ -257,8 +255,22 @@ const DrawCore = ({
         image
       ) {
         setOpacity(0);
-        setRatioImage(originalImageSize.height / imageSize?.height);
-        setImageSize(originalImageSize);
+        // Limit image size for iOS (max 4096px to avoid GPU texture limits)
+        const MAX_DIMENSION = 2000;
+        let finalWidth = originalImageSize.width;
+        let finalHeight = originalImageSize.height;
+
+        if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
+          const scale = Math.min(
+            MAX_DIMENSION / finalWidth,
+            MAX_DIMENSION / finalHeight
+          );
+          finalWidth = Math.floor(finalWidth * scale);
+          finalHeight = Math.floor(finalHeight * scale);
+        }
+
+        setRatioImage(finalHeight / imageSize?.height);
+        setImageSize({ width: finalWidth, height: finalHeight });
       } else if (!image && drawRegion?.height) {
         const width = 1500;
         const height = width / 1.3333333;
@@ -266,6 +278,8 @@ const DrawCore = ({
         setRatioImage(height / drawRegion.height);
         setImageSize({ width, height });
       }
+      setSnapShotRequested(false);
+      setNewLayoutRequested(true);
     }
   }, [
     snapShotRequested,
@@ -1253,11 +1267,12 @@ const DrawCore = ({
 
   const onLayout = useCallback(async () => {
     if (newLayoutRequested) {
-      setNewLayoutRequested(false);
+
       const uri = await captureSnapshot();
       if (uri && typeof actionWithSnapShotUri === 'function') {
         await actionWithSnapShotUri(uri);
       }
+      setNewLayoutRequested(false);
     }
   }, [actionWithSnapShotUri, newLayoutRequested, captureSnapshot]);
 

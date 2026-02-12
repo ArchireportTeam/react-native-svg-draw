@@ -18,7 +18,11 @@ const useDrawHook = () => {
 
   const captureSnapshot = useCallback(async () => {
     if (viewShot) {
-      return await viewShot.current?.capture?.();
+      try {
+        return await viewShot.current?.capture?.();
+      } catch (e) {
+        console.log('captureSnapshot error:', e);
+      }
     }
     return null;
   }, [viewShot]);

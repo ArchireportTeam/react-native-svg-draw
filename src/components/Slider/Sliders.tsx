@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, ViewProps } from 'react-native';
+import { View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import StrokeSlider from './StrokeSlider';
 import ColorSlider from './ColorSlider';
-import type { LinearGradientType } from '../../types';
+import type { LinearGradientComponentProps } from '../../types';
 import useDrawHook from '../DrawCore/useDrawHook';
 import { StyleSheet } from 'react-native';
 
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
 const Sliders = ({
   linearGradient,
 }: {
-  linearGradient: React.ComponentType<LinearGradientType & ViewProps>;
+  linearGradient: React.ComponentType<LinearGradientComponentProps>;
 }) => {
   const { strokeWidth, color } = useDrawHook();
 
@@ -55,7 +55,7 @@ const Sliders = ({
       borderWidth: strokeWidth!.value,
       borderColor: color!.value,
     };
-  }, [strokeWidth, color]);
+  });
 
   return (
     <View style={styles.strokeContainer}>

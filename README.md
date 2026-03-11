@@ -8,7 +8,7 @@ React Native drawing component based on SVG with editable annotations
 
 - Draw arrow, rectangle, ellipse ... on picture or blank view
 - Compatible with `Expo`
-- Built with `react-native-reanimated` v2
+- Compatible with `react-native-reanimated` v3 and v4
 - Save result with `react-native-view-shot`
 - Fully customisable
 
@@ -36,7 +36,14 @@ expo install @archireport/react-native-svg-draw react-native-reanimated react-na
 
 _React Native Gesture Handler_ needs extra steps to finalize its installation, please follow their [installation instructions](https://docs.swmansion.com/react-native-gesture-handler/docs/#installation).
 
-_React Native Reanimated_ needs extra steps to finalize its installation, please follow their [installation instructions](https://docs.swmansion.com/react-native-reanimated/docs/installation/).
+_React Native Reanimated_ needs extra steps to finalize its installation, please follow their [installation instructions](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/).
+
+If your app uses `react-native-reanimated` v4:
+
+- Reanimated 4 requires the React Native New Architecture.
+- Install `react-native-worklets` alongside `react-native-reanimated`.
+- Use `react-native-worklets/plugin` as the last Babel plugin.
+- If your app still runs on the legacy architecture, stay on Reanimated 3.
 
 ---
 

@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Animated, {
-  createAnimatedPropAdapter,
-  processColor,
   runOnJS,
   useAnimatedProps,
   useAnimatedReaction,
+  useAnimatedStyle,
 } from 'react-native-reanimated';
 import { Path, Ellipse, Rect, Line, G } from 'react-native-svg';
 import type { hslColor, Point } from '../../types';
@@ -22,8 +21,6 @@ const AnimatedRectangle = Animated.createAnimatedComponent(Rect);
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 
 //const AnimatedText = Animated.createAnimatedComponent(Text);
-
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 // properties of a line
 const line = (pointA: Point, pointB: Point) => {
@@ -87,15 +84,26 @@ const bezierCommand = (point: Point, i: number, a: Point[]) => {
 
 export const pointsToPath = (points: Point[]) => {
   'worklet';
-  return points.length > 0
-    ? points.reduce(
-        (acc, point, i, a) =>
-          i === 0
-            ? `M ${point.x},${point.y}`
-            : `${acc} ${bezierCommand(point, i, a)}`,
-        ''
-      )
-    : '';
+  if (points.length === 0) {
+    return '';
+  }
+
+  let path = '';
+
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index];
+
+    if (!point) {
+      continue;
+    }
+
+    path =
+      index === 0
+        ? `M ${point.x},${point.y}`
+        : `${path} ${bezierCommand(point, index, points)}`;
+  }
+
+  return path;
 };
 
 function hue2rgb(p: number, q: number, t: number) {
@@ -145,26 +153,8 @@ export function hslToRgb(col: hslColor) {
   )})`;
 }
 
-const propAdapter = createAnimatedPropAdapter(
-  (props: Record<string, unknown>) => {
-    if (
-      Object.keys(props).includes('fill') &&
-      (typeof props.fill === 'string' || typeof props.fill === 'number')
-    ) {
-      props.fill = { type: 0, payload: processColor(props.fill as string) };
-    }
-    if (
-      Object.keys(props).includes('stroke') &&
-      (typeof props.stroke === 'string' || typeof props.stroke === 'number')
-    ) {
-      props.stroke = { type: 0, payload: processColor(props.stroke as string) };
-    }
-  },
-  ['fill', 'stroke']
-);
-
 export default function CurrentAnimatedItem() {
-  const { currentItem, doubleArrowTextInput } = useDrawHook();
+  const { currentItem } = useDrawHook();
 
   const getTextLength = () => {
     'worklet';
@@ -175,83 +165,74 @@ export default function CurrentAnimatedItem() {
     return textLength;
   };
 
-  const ellipseAnimatedProps = useAnimatedProps(
-    () => {
-      const coordinates =
+  const ellipseAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const coordinates =
+      currentItem.value?.type === 'ellipse'
+        ? currentItem.value.data
+        : { cx: -10, cy: -10, rx: 0, ry: 0 };
+
+    return {
+      cx: coordinates.cx,
+      cy: coordinates.cy,
+      rx: coordinates.rx,
+      ry: coordinates.ry,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
+      strokeWidth:
         currentItem.value?.type === 'ellipse'
-          ? currentItem.value.data
-          : { cx: -10, cy: -10, rx: 0, ry: 0 };
+          ? currentItem.value.strokeWidth
+          : 0,
+      marker: 'url(#selection)',
+    };
+  });
 
-      return {
-        cx: coordinates.cx,
-        cy: coordinates.cy,
-        rx: coordinates.rx,
-        ry: coordinates.ry,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'ellipse' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'ellipse'
-            ? currentItem.value.strokeWidth
-            : 0,
-        marker: 'url(#selection)',
-      };
-    },
-    null,
-    propAdapter
-  );
-
-  const singleHeadAnimatedProps = useAnimatedProps(
-    () => {
-      const coordinates =
+  const singleHeadAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const coordinates =
+      currentItem.value?.type === 'singleHead'
+        ? currentItem.value.data
+        : { x1: -10, y1: -10, x2: -10, y2: -10 };
+    return {
+      x1: coordinates.x1,
+      y1: coordinates.y1,
+      x2: coordinates.x2,
+      y2: coordinates.y2,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
+      strokeWidth:
         currentItem.value?.type === 'singleHead'
-          ? currentItem.value.data
-          : { x1: -10, y1: -10, x2: -10, y2: -10 };
-      return {
-        x1: coordinates.x1,
-        y1: coordinates.y1,
-        x2: coordinates.x2,
-        y2: coordinates.y2,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'singleHead' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'singleHead'
-            ? currentItem.value.strokeWidth
-            : 0,
-        markerEnd: 'arrowhead',
-      };
-    },
-    null,
-    propAdapter
-  );
+          ? currentItem.value.strokeWidth
+          : 0,
+      markerEnd: 'arrowhead',
+    };
+  });
 
-  const doubleHeadAnimatedProps = useAnimatedProps(
-    () => {
-      const coordinates =
+  const doubleHeadAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const coordinates =
+      currentItem.value?.type === 'doubleHead'
+        ? currentItem.value.data
+        : { x1: -10, y1: -10, x2: -10, y2: -10 };
+
+    return {
+      x1: coordinates.x1,
+      y1: coordinates.y1,
+      x2: coordinates.x2,
+      y2: coordinates.y2,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
+      strokeWidth:
         currentItem.value?.type === 'doubleHead'
-          ? currentItem.value.data
-          : { x1: -10, y1: -10, x2: -10, y2: -10 };
-
-      return {
-        x1: coordinates.x1,
-        y1: coordinates.y1,
-        x2: coordinates.x2,
-        y2: coordinates.y2,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'doubleHead' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'doubleHead'
-            ? currentItem.value.strokeWidth
-            : 0,
-        markerStart: 'side',
-        markerEnd: 'side',
-      };
-    },
-    null,
-    propAdapter
-  );
+          ? currentItem.value.strokeWidth
+          : 0,
+      markerStart: 'side',
+      markerEnd: 'side',
+    };
+  });
   const distance = (x1: number, y1: number, x2: number, y2: number) => {
     'worklet';
     return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
@@ -334,85 +315,157 @@ export default function CurrentAnimatedItem() {
     return [newX1, newY1, newX2, newY2];
   };
 
-  const doubleArrowsAnimatedPropsFirst = useAnimatedProps(
-    () => {
-      let x1, y1, x2, y2;
+  const doubleArrowsAnimatedPropsFirst = useAnimatedProps(() => {
+    'worklet';
+    let x1, y1, x2, y2;
 
-      if (currentItem.value?.type !== 'doubleArrows') {
-        x1 = -10;
-        y1 = -10;
-        x2 = -10;
-        y2 = -10;
-      } else {
-        const coordinates = currentItem.value.data;
-        [x1, y1, x2, y2] = getGetcoordinateValue({
-          x1: Number(coordinates.x1),
-          y1: Number(coordinates.y1),
-          x2: Number(coordinates.x2),
-          y2: Number(coordinates.y2),
-          first: true,
-          //text: currentItem.value?.text,
-        });
-      }
+    if (currentItem.value?.type !== 'doubleArrows') {
+      x1 = -10;
+      y1 = -10;
+      x2 = -10;
+      y2 = -10;
+    } else {
+      const coordinates = currentItem.value.data;
+      [x1, y1, x2, y2] = getGetcoordinateValue({
+        x1: Number(coordinates.x1),
+        y1: Number(coordinates.y1),
+        x2: Number(coordinates.x2),
+        y2: Number(coordinates.y2),
+        first: true,
+        //text: currentItem.value?.text,
+      });
+    }
 
-      return {
-        x1,
-        y1,
-        x2,
-        y2,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'doubleArrows'
-            ? currentItem.value.strokeWidth
-            : 0,
-        markerStart: 'arrowheadStart',
-      };
-    },
-    null,
-    propAdapter
+    return {
+      x1,
+      y1,
+      x2,
+      y2,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
+      strokeWidth:
+        currentItem.value?.type === 'doubleArrows'
+          ? currentItem.value.strokeWidth
+          : 0,
+      markerStart: 'arrowheadStart',
+    };
+  });
+
+  const doubleArrowsAnimatedPropsLast = useAnimatedProps(() => {
+    'worklet';
+    let x1, y1, x2, y2;
+
+    if (currentItem.value?.type !== 'doubleArrows') {
+      x1 = -10;
+      y1 = -10;
+      x2 = -10;
+      y2 = -10;
+    } else {
+      const coordinates = currentItem.value.data;
+      [x1, y1, x2, y2] = getGetcoordinateValue({
+        x1: Number(coordinates.x1),
+        y1: Number(coordinates.y1),
+        x2: Number(coordinates.x2),
+        y2: Number(coordinates.y2),
+        first: false,
+        //text: currentItem.value?.text,
+      });
+    }
+
+    return {
+      x1,
+      y1,
+      x2,
+      y2,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
+      strokeWidth:
+        currentItem.value?.type === 'doubleArrows'
+          ? currentItem.value.strokeWidth
+          : 0,
+      markerEnd: 'arrowhead',
+    };
+  });
+
+  const rectangleAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const coordinates =
+      currentItem.value?.type === 'rectangle'
+        ? currentItem.value.data
+        : { x: -10, y: -10, width: 0, height: 0 };
+    return {
+      x: coordinates.x,
+      y: coordinates.y,
+      width: coordinates.width,
+      height: coordinates.height,
+      fill: 'transparent',
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
+      strokeWidth:
+        currentItem.value?.type === 'rectangle'
+          ? currentItem.value.strokeWidth
+          : 0,
+
+      marker: 'url(#selection)',
+    };
+  });
+
+  const penAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const d = pointsToPath(
+      currentItem.value?.type === 'pen'
+        ? currentItem.value.data
+        : [{ x: -10, y: -10 }]
+    );
+    return {
+      d: d,
+      opacity: currentItem.value?.type === 'pen' ? 1 : 0,
+      stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
+      strokeWidth:
+        currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
+      fill: 'transparent',
+      markerStart: 'selection',
+      markerEnd: 'selection',
+    };
+  });
+
+  return (
+    <>
+      <AnimatedEllipse animatedProps={ellipseAnimatedProps} />
+      <G markerStart="url(#selection)" markerEnd="url(#selection)">
+        <AnimatedLine animatedProps={singleHeadAnimatedProps} />
+      </G>
+      <G markerStart="url(#selection)" markerEnd="url(#selection)">
+        <AnimatedLine animatedProps={doubleHeadAnimatedProps} />
+      </G>
+      <G markerStart="url(#selection)" markerEnd="url(#selection)">
+        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsFirst} />
+
+        <AnimatedLine animatedProps={doubleArrowsAnimatedPropsLast} />
+      </G>
+      <AnimatedRectangle animatedProps={rectangleAnimatedProps} />
+      <AnimatedPath animatedProps={penAnimatedProps} />
+    </>
   );
+}
 
-  const doubleArrowsAnimatedPropsLast = useAnimatedProps(
-    () => {
-      let x1, y1, x2, y2;
+export function DoubleArrowsTextInput() {
+  const { currentItem, doubleArrowTextInput } = useDrawHook();
 
-      if (currentItem.value?.type !== 'doubleArrows') {
-        x1 = -10;
-        y1 = -10;
-        x2 = -10;
-        y2 = -10;
-      } else {
-        const coordinates = currentItem.value.data;
-        [x1, y1, x2, y2] = getGetcoordinateValue({
-          x1: Number(coordinates.x1),
-          y1: Number(coordinates.y1),
-          x2: Number(coordinates.x2),
-          y2: Number(coordinates.y2),
-          first: false,
-          //text: currentItem.value?.text,
-        });
-      }
+  const getTextLength = () => {
+    'worklet';
+    const text =
+      currentItem.value?.type === 'doubleArrows' ? currentItem.value?.text : '';
+    const textLength = text && text.length > 5 ? text.length * 10 : 50;
+    return textLength;
+  };
 
-      return {
-        x1,
-        y1,
-        x2,
-        y2,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'doubleArrows' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'doubleArrows'
-            ? currentItem.value.strokeWidth
-            : 0,
-        markerEnd: 'arrowhead',
-      };
-    },
-    null,
-    propAdapter
-  );
+  const distance = (x1: number, y1: number, x2: number, y2: number) => {
+    'worklet';
+    return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+  };
 
   const getTextValues = ({
     x1,
@@ -448,174 +501,78 @@ export default function CurrentAnimatedItem() {
 
     return [newX, newY, angle];
   };
-  const doubleArrowsAnimatedPropsText = useAnimatedProps(
+
+  const containerStyle = useAnimatedStyle(() => {
+    let x = 0,
+      y = 0,
+      angle = 0;
+
+    if (currentItem.value?.type !== 'doubleArrows') {
+      x = -50;
+      y = -50;
+      angle = 0;
+    } else {
+      const coordinates = currentItem.value.data;
+      [x, y, angle] = getTextValues({
+        x1: Number(coordinates.x1),
+        y1: Number(coordinates.y1),
+        x2: Number(coordinates.x2),
+        y2: Number(coordinates.y2),
+      });
+    }
+
+    return {
+      position: 'absolute' as const,
+      top: y - 25,
+      left: x - getTextLength() / 2,
+      transform: [{ rotateZ: `${angle}deg` }],
+      width: getTextLength(),
+      height: 50,
+    };
+  });
+
+  const [textStyle, setTextStyle] = useState<{
+    fontSize: number;
+    color: string;
+  }>({
+    fontSize: 12,
+    color: 'white',
+  });
+
+  useAnimatedReaction(
     () => {
-      let x = 0,
-        y = 0,
-        angle = 0;
-
-      if (currentItem.value?.type !== 'doubleArrows') {
-        x = -50;
-        y = -50;
-        angle = 0;
-      } else {
-        const coordinates = currentItem.value.data;
-        [x, y, angle] = getTextValues({
-          x1: Number(coordinates.x1),
-          y1: Number(coordinates.y1),
-          x2: Number(coordinates.x2),
-          y2: Number(coordinates.y2),
-        });
-      }
-
       return {
-        top: y - 25,
-        left: x - getTextLength() / 2,
         fontSize: 10 + (currentItem.value?.strokeWidth ?? 0) * 2,
         color: currentItem.value?.color
           ? hslToRgb(currentItem.value?.color)
           : 'white',
-        transform: [{ rotateZ: `${angle}deg` }],
-        //backgroundColor: 'red',
-        width: getTextLength(),
-        height: 50,
       };
-    },
-    null,
-    propAdapter
-  );
-
-  const rectangleAnimatedProps = useAnimatedProps(
-    () => {
-      const coordinates =
-        currentItem.value?.type === 'rectangle'
-          ? currentItem.value.data
-          : { x: -10, y: -10, width: 0, height: 0 };
-      return {
-        x: coordinates.x,
-        y: coordinates.y,
-        width: coordinates.width,
-        height: coordinates.height,
-        fill: 'transparent',
-        //stroke: hslToRgb(currentItem.value?.color || 'hsl(0, 0%, 0%)'),
-        opacity: currentItem.value?.type === 'rectangle' ? 1 : 0,
-        strokeWidth:
-          currentItem.value?.type === 'rectangle'
-            ? currentItem.value.strokeWidth
-            : 0,
-
-        marker: 'url(#selection)',
-      };
-    },
-    null,
-    propAdapter
-  );
-
-  const penAnimatedProps = useAnimatedProps(
-    () => {
-      const d = pointsToPath(
-        currentItem.value?.type === 'pen'
-          ? currentItem.value.data
-          : [{ x: -10, y: -10 }]
-      );
-      return {
-        d: d,
-        //opacity: 1,
-        opacity: currentItem.value?.type === 'pen' ? 1 : 0,
-        //stroke: currentItem.value?.color || "black",
-        strokeWidth:
-          currentItem.value?.type === 'pen' ? currentItem.value.strokeWidth : 0,
-        fill: 'transparent',
-        markerStart: 'selection',
-        markerEnd: 'selection',
-      };
-    },
-    null,
-    propAdapter
-  );
-
-  const updateText = (value: string) => {
-    if (!doubleArrowTextInput?.current) return;
-    doubleArrowTextInput.current.setNativeProps({
-      text: value,
-    });
-  };
-  useAnimatedReaction(
-    () => {
-      return currentItem.value?.type === 'doubleArrows'
-        ? currentItem.value?.text || ''
-        : '';
     },
     (value) => {
-      if (updateText) runOnJS(updateText)(value);
-    },
-    [updateText, doubleArrowTextInput]
+      runOnJS(setTextStyle)(value);
+    }
   );
 
   return (
-    <>
-      <AnimatedEllipse
-        animatedProps={ellipseAnimatedProps}
-        stroke={currentItem.value?.color || 'black'}
-      />
-      <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine
-          animatedProps={singleHeadAnimatedProps}
-          stroke={currentItem.value?.color || 'black'}
-        />
-      </G>
-      <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine
-          animatedProps={doubleHeadAnimatedProps}
-          stroke={currentItem.value?.color || 'black'}
-        />
-      </G>
-      <G markerStart="url(#selection)" markerEnd="url(#selection)">
-        <AnimatedLine
-          animatedProps={doubleArrowsAnimatedPropsFirst}
-          stroke={currentItem.value?.color || 'black'}
-        />
-
-        <AnimatedTextInput
-          animatedProps={{
-            ...(doubleArrowsAnimatedPropsText as any), // Type cast to bypass the type error
-            // Ensure other relevant props if needed
-          }}
-          value={
-            currentItem.value?.type === 'doubleArrows'
-              ? currentItem.value.text
-              : ''
+    <Animated.View style={containerStyle}>
+      <TextInput
+        defaultValue={
+          currentItem.value?.type === 'doubleArrows'
+            ? currentItem.value.text
+            : ''
+        }
+        ref={doubleArrowTextInput}
+        underlineColorAndroid={'transparent'}
+        onChangeText={(text) => {
+          if (currentItem.value?.type === 'doubleArrows') {
+            currentItem.value = {
+              ...currentItem.value,
+              text,
+            };
           }
-          ref={doubleArrowTextInput}
-          underlineColorAndroid={'transparent'}
-          onChangeText={(text) => {
-            if (currentItem.value?.type === 'doubleArrows') {
-              currentItem.value = {
-                ...currentItem.value,
-                text,
-              };
-            }
-          }}
-          style={{
-            color: 'black',
-            fontSize: 24,
-            position: 'absolute',
-          }}
-        />
-
-        <AnimatedLine
-          animatedProps={doubleArrowsAnimatedPropsLast}
-          stroke={currentItem.value?.color || 'black'}
-        />
-      </G>
-      <AnimatedRectangle
-        animatedProps={rectangleAnimatedProps}
-        stroke={currentItem.value?.color || 'black'}
+        }}
+        style={textStyle}
       />
-      <AnimatedPath
-        animatedProps={penAnimatedProps}
-        stroke={currentItem.value?.color || 'black'}
-      />
-    </>
+    </Animated.View>
   );
 }

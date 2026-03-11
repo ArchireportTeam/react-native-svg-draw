@@ -55,6 +55,11 @@ export type LinearGradientType = {
   end?: { x: number; y: number };
 };
 
+export type LinearGradientComponentProps = LinearGradientType & {
+  style?: any;
+  onLayout?: (...args: any[]) => void;
+};
+
 export type Action =
   | { type: 'ADD_DONE_ITEM'; item: DrawItem }
   | { type: 'DELETE_DONE_ITEM'; indice: number }

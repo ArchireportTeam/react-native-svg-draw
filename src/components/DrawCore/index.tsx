@@ -107,7 +107,7 @@ type Context = {
     | 'OUT';
 };
 
-const drawNewItem = (
+function drawNewItem(
   mode: Animated.SharedValue<DrawItemType>,
   currentItem: Animated.SharedValue<DrawItem | null>,
   addDoneItem: (item: DrawItem) => void,
@@ -117,7 +117,7 @@ const drawNewItem = (
     strokeWidth: Animated.SharedValue<number>;
     color: Animated.SharedValue<hslColor>;
   }
-) => {
+) {
   'worklet';
   if (currentItem.value) {
     runOnJS(addDoneItem)(currentItem.value);
@@ -195,13 +195,13 @@ const drawNewItem = (
       };
       break;
   }
-};
+}
 
-const onTextHeightUpdate = (
+function onTextHeightUpdate(
   currentItem: Animated.SharedValue<DrawItem | null>,
   textBaseHeight: Animated.SharedValue<number | null>,
   height: number
-) => {
+) {
   'worklet';
   if (currentItem.value?.type === 'text') {
     textBaseHeight.value = textBaseHeight.value || height;
@@ -217,7 +217,7 @@ const onTextHeightUpdate = (
       text: currentItem.value.text,
     };
   }
-};
+}
 
 const DrawCore = ({
   image,
@@ -593,15 +593,27 @@ const DrawCore = ({
 
           break;
         case 'pen':
-          if (
-            currentItem.value.data.some(
-              (p) =>
-                startX <= p.x + THRESHOLD &&
-                startX >= p.x - THRESHOLD &&
-                startY <= p.y + THRESHOLD &&
-                startY >= p.y - THRESHOLD
-            )
+          let isPointSelected = false;
+          for (
+            let index = 0;
+            index < currentItem.value.data.length;
+            index += 1
           ) {
+            const point = currentItem.value.data[index];
+
+            if (
+              point &&
+              startX <= point.x + THRESHOLD &&
+              startX >= point.x - THRESHOLD &&
+              startY <= point.y + THRESHOLD &&
+              startY >= point.y - THRESHOLD
+            ) {
+              isPointSelected = true;
+              break;
+            }
+          }
+
+          if (isPointSelected) {
             gestureContext.value.zone = 'CENTER';
           } else {
             gestureContext.value.zone = 'OUT';
@@ -611,7 +623,7 @@ const DrawCore = ({
         default:
           gestureContext.value.zone = 'OUT';
           initialItem.value = null;
-          if (drawState.drawingMode === 'text') {
+          if (mode.value === 'text') {
             gestureContext.value.newlyCreated = true;
 
             runOnJS(setTextVal)('');
@@ -658,14 +670,30 @@ const DrawCore = ({
             initialItem.value?.type === currentItem.value.type &&
             zone === 'CENTER'
           ) {
+            const translatedData = [];
+
+            for (
+              let index = 0;
+              index < initialItem.value.data.length;
+              index += 1
+            ) {
+              const point = initialItem.value.data[index];
+
+              if (!point) {
+                continue;
+              }
+
+              translatedData.push({
+                x: point.x + translationX,
+                y: point.y + translationY,
+              });
+            }
+
             currentItem.value = {
               type: 'pen',
               strokeWidth: currentItem.value.strokeWidth,
               color: currentItem.value.color,
-              data: initialItem.value.data.map((p) => ({
-                x: p.x + translationX,
-                y: p.y + translationY,
-              })),
+              data: translatedData,
             };
           } else {
             currentItem.value = {
@@ -1081,6 +1109,30 @@ const DrawCore = ({
       runOnJS(addScreenStates)(currentItem.value);
     });
 
+  const tapGesture = Gesture.Tap()
+    .onStart((event) => {
+      if (mode.value === 'text') {
+        const { x: startX, y: startY } = event;
+
+        runOnJS(setTextVal)('');
+
+        drawNewItem(
+          mode,
+          currentItem,
+          addDoneItem,
+          { x: startX, y: startY },
+          { textBaseHeight, strokeWidth, color }
+        );
+
+        itemIsSelected!.value = true;
+        onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+
+        runOnJS(textFocus)();
+      }
+    });
+
+  const composedGesture = Gesture.Race(tapGesture, panGesture);
+
   useEffect(() => {
     const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
       showTextInput.value = false;
@@ -1140,8 +1192,7 @@ const DrawCore = ({
           };
           break;
       }
-    },
-    [strokeWidth.value, color?.value]
+    }
   );
 
   const onPressItem = useCallback(
@@ -1163,8 +1214,10 @@ const DrawCore = ({
         setTextVal(item.text ?? '');
         textInputRef.current?.focus();
       } else if (item.type === 'doubleArrows') {
-        //setTextVal(item.text ?? '');
-        //textInputRef.current?.focus();
+        doubleArrowTextInput?.current?.setNativeProps({
+          text: item.text ?? '',
+        });
+        doubleArrowTextInput?.current?.focus();
       } else {
         textInputRef.current?.blur();
       }
@@ -1267,7 +1320,6 @@ const DrawCore = ({
 
   const onLayout = useCallback(async () => {
     if (newLayoutRequested) {
-
       const uri = await captureSnapshot();
       if (uri && typeof actionWithSnapShotUri === 'function') {
         await actionWithSnapShotUri(uri);
@@ -1294,7 +1346,7 @@ const DrawCore = ({
         }}
       >
         <KeyboardAvoidingView behavior="position" keyboardVerticalOffset={70}>
-          <GestureDetector gesture={panGesture}>
+          <GestureDetector gesture={composedGesture}>
             <Animated.View
               style={{ ...(imageSize || drawRegion), opacity: opacity }}
               onLayout={onLayout}

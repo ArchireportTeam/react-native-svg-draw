@@ -50,7 +50,6 @@ const useDrawHook = () => {
   }, [currentItem, dispatchDrawStates, itemIsSelected]);
 
   const onColorStrokeChange = useCallback(() => {
-    'worklet';
     if (currentItem?.value) {
       dispatchDrawStates({
         type: 'ADD_SCREEN_STATE',

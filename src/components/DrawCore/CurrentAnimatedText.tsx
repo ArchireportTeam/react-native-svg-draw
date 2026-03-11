@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
-  useDerivedValue,
 } from 'react-native-reanimated';
 import type { DrawItem } from '../../types';
 import { hslToRgb } from './CurrentAnimatedItem';
@@ -53,11 +53,16 @@ export default function CurrentAnimatedText({
     currentItem.value?.type === 'text' ? currentItem.value.text || '' : ''
   );
 
-  useDerivedValue(() => {
-    runOnJS(setText)(
-      currentItem.value?.type === 'text' ? currentItem.value.text || '' : ''
-    );
-  }, [currentItem.value]);
+  useAnimatedReaction(
+    () => {
+      return currentItem.value?.type === 'text'
+        ? currentItem.value.text || ''
+        : '';
+    },
+    (value) => {
+      runOnJS(setText)(value);
+    }
+  );
 
   const textAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -66,7 +71,7 @@ export default function CurrentAnimatedText({
         ? hslToRgb(currentItem.value?.color)
         : 'white',
     };
-  }, [currentItem.value?.strokeWidth]);
+  });
 
   const containerStyle = useAnimatedStyle(() => {
     return {
@@ -104,7 +109,7 @@ export default function CurrentAnimatedText({
         },
       ],
     };
-  }, [currentItem.value]);
+  });
 
   return (
     <Animated.View style={containerStyle}>

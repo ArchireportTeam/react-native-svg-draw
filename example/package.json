@@ -8,16 +8,18 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~48.0.21",
-    "expo-linear-gradient": "~12.1.2",
-    "expo-status-bar": "~1.4.4",
-    "react": "18.2.0",
-    "react-native": "0.71.14",
-    "react-native-gesture-handler": "~2.9.0",
-    "react-native-reanimated": "~2.14.4",
-    "react-native-svg": "13.4.0",
-    "react-native-view-shot": "3.5.0",
-    "expo-splash-screen": "~0.18.2"
+    "expo": "~55.0.6",
+    "expo-linear-gradient": "~55.0.8",
+    "expo-splash-screen": "~55.0.10",
+    "expo-status-bar": "~55.0.4",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-reanimated": "~4.2.1",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-svg": "15.15.3",
+    "react-native-view-shot": "4.0.3",
+    "react-native-worklets": "~0.7.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

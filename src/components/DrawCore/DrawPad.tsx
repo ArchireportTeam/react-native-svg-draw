@@ -1,7 +1,9 @@
 import React from 'react';
 import type Animated from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Marker, Polyline, Use } from 'react-native-svg';
-import CurrentAnimatedItem from './CurrentAnimatedItem';
+import CurrentAnimatedItem, {
+  DoubleArrowsTextInput,
+} from './CurrentAnimatedItem';
 import CurrentAnimatedText from './CurrentAnimatedText';
 import Item from './Item';
 import type { DrawItem } from '../../types';
@@ -107,6 +109,7 @@ const DrawPad = ({
         currentItem={currentItem}
         onHeightChange={onTextHeightChange}
       />
+      <DoubleArrowsTextInput />
     </>
   );
 };

@@ -3,7 +3,6 @@ import {
   Pressable,
   View,
   StyleSheet,
-  ViewProps,
   ImageRequireSource,
   ImageURISource,
   Keyboard,
@@ -22,6 +21,7 @@ import ThrashSvg from './ThrashSvg';
 import CancelSvg from './CancelSvg';
 import SendSvg from './SendSvg';
 import DrawProvider from '../DrawCore/DrawProvider';
+import type { LinearGradientComponentProps } from '../../types';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
 });
 
 type DrawWithOptionsProps = {
-  linearGradient: React.ComponentType<{ colors: any[] } & ViewProps>;
+  linearGradient: React.ComponentType<LinearGradientComponentProps>;
   image?: ImageRequireSource | ImageURISource;
   close?: () => void;
   actionWithSnapShotUri?: (uri: string) => Promise<void>;

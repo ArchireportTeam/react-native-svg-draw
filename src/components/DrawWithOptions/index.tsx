@@ -7,6 +7,7 @@ import {
   ImageURISource,
   Keyboard,
 } from 'react-native';
+import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import DoubleHeadSvg from './DoubleHeadSvg';
 import CircleSvg from './CircleSvg';
 import SquareSvg from './SquareSvg';
@@ -97,6 +98,14 @@ function DrawWithOptionsCore({
   } = useDrawHook();
 
   const [showToolbar, setShowToolbar] = useState(true);
+  const [isSelected, setIsSelected] = useState(false);
+
+  useAnimatedReaction(
+    () => itemIsSelected.value,
+    (value) => {
+      runOnJS(setIsSelected)(value);
+    }
+  );
 
   useEffect(() => {
     const sudDidHide = Keyboard.addListener('keyboardDidHide', () => {
@@ -106,7 +115,6 @@ function DrawWithOptionsCore({
     const sudDidShow = Keyboard.addListener(
       'keyboardDidShow',
       (event: { endCoordinates: { height: number } }) => {
-        console.log('keyboardDidShow dwo');
         // avoid events triggered by InputAccessoryView
         if (event.endCoordinates.height > 100) {
           setShowToolbar(false);
@@ -284,7 +292,7 @@ function DrawWithOptionsCore({
       <View style={{ height: 70 }}>
         {showToolbar ? (
           <View style={styles.bottomToolBar}>
-            {itemIsSelected.value ? (
+            {isSelected ? (
               <View style={{ ...styles.actionButton, marginRight: 10 }}>
                 <Pressable style={styles.option} onPress={deleteSelectedItem}>
                   <ThrashSvg

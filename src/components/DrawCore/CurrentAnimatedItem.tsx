@@ -556,11 +556,6 @@ export function DoubleArrowsTextInput() {
   return (
     <Animated.View style={containerStyle}>
       <TextInput
-        defaultValue={
-          currentItem.value?.type === 'doubleArrows'
-            ? currentItem.value.text
-            : ''
-        }
         ref={doubleArrowTextInput}
         underlineColorAndroid={'transparent'}
         onChangeText={(text) => {

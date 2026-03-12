@@ -49,9 +49,7 @@ export default function CurrentAnimatedText({
   currentItem: Animated.SharedValue<DrawItem | null>;
   onHeightChange: (height: number) => void;
 }) {
-  const [text, setText] = useState(
-    currentItem.value?.type === 'text' ? currentItem.value.text || '' : ''
-  );
+  const [text, setText] = useState('');
 
   useAnimatedReaction(
     () => {

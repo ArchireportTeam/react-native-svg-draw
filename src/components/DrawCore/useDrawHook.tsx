@@ -56,7 +56,7 @@ const useDrawHook = () => {
         currentItem: currentItem.value,
       });
     }
-  }, [currentItem?.value, dispatchDrawStates]);
+  }, [currentItem, dispatchDrawStates]);
 
   return {
     drawState: drawState!,

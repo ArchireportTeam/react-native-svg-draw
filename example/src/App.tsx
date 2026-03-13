@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { StyleSheet, Dimensions, View, Pressable, Text } from 'react-native';
+import { StyleSheet, Dimensions, View, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   DrawWithOptions,
@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import ZoomableImage from './ZoomableImage';
+import { Pressable } from 'react-native-gesture-handler';
 
 export default function App() {
   const [snapshotUri, setSnapshotUri] = useState<string | null>(null);

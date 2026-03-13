@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Pressable,
   View,
   StyleSheet,
   ImageRequireSource,
@@ -8,6 +7,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
+import { Pressable } from 'react-native-gesture-handler';
 import DoubleHeadSvg from './DoubleHeadSvg';
 import CircleSvg from './CircleSvg';
 import SquareSvg from './SquareSvg';

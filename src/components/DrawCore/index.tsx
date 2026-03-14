@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import Animated, {
   runOnJS,
-  useAnimatedKeyboard,
   useAnimatedReaction,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -1109,27 +1108,26 @@ const DrawCore = ({
       runOnJS(addScreenStates)(currentItem.value);
     });
 
-  const tapGesture = Gesture.Tap()
-    .onStart((event) => {
-      if (mode.value === 'text') {
-        const { x: startX, y: startY } = event;
+  const tapGesture = Gesture.Tap().onStart((event) => {
+    if (mode.value === 'text') {
+      const { x: startX, y: startY } = event;
 
-        runOnJS(setTextVal)('');
+      runOnJS(setTextVal)('');
 
-        drawNewItem(
-          mode,
-          currentItem,
-          addDoneItem,
-          { x: startX, y: startY },
-          { textBaseHeight, strokeWidth, color }
-        );
+      drawNewItem(
+        mode,
+        currentItem,
+        addDoneItem,
+        { x: startX, y: startY },
+        { textBaseHeight, strokeWidth, color }
+      );
 
-        itemIsSelected!.value = true;
-        onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
+      itemIsSelected!.value = true;
+      onCancelChangeWrapper && runOnJS(onCancelChangeWrapper)(true);
 
-        runOnJS(textFocus)();
-      }
-    });
+      runOnJS(textFocus)();
+    }
+  });
 
   const composedGesture = Gesture.Race(tapGesture, panGesture);
 
@@ -1229,6 +1227,7 @@ const DrawCore = ({
       color,
       deleteDoneItem,
       addDoneItem,
+      doubleArrowTextInput,
     ]
   );
   /*
@@ -1313,8 +1312,13 @@ const DrawCore = ({
     }
   }, [image, drawRegion, calculateSizes]);
 
-  // do not remove keyboard will appear over the drawing frame and not shift it
-  useAnimatedKeyboard();
+  // useAnimatedKeyboard() was previously used here to prevent the keyboard from
+  // shifting the drawing frame (it sets windowSoftInputMode to adjustNothing).
+  // Removed: its cleanup on unmount is incomplete on stock Android (Pixel),
+  // which corrupts the window's touch dispatch chain and makes all
+  // Touchable/Pressable unresponsive after leaving this screen.
+  // The KeyboardAvoidingView with behavior="position" already handles
+  // keyboard avoidance for the text input.
 
   const [newLayoutRequested, setNewLayoutRequested] = useState(false);
 
